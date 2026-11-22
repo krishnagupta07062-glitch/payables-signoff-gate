@@ -1,6 +1,6 @@
 # Build status
 
-*Krishna's Claude session updates this file as teammates push. Last update: 13:55 IST.*
+*Krishna's Claude session updates this file as teammates push. Last update: 14:00 IST.*
 
 ## Checkpoints
 
@@ -25,8 +25,9 @@
 | `gate/pipeline.py` | ✅ | vendor first → extract → verify → decide → store → ledger → execute; falls back to mocks while teammates' modules are stubs |
 | `fixtures/` | ✅ | 2 synthetic vendors and 13 requests (10 cases plus pushy and Hinglish variants), built by `fixtures/build_fixtures.py` |
 | `scripts/run_demo.py` | ✅ | `--live`, `--case N`, `--trace`; 13/13 offline |
-| `gate/baseline_guard.py` + `--contrast` | ⏳ next | |
-| README for judges | ⏳ 16:45 | |
+| `gate/baseline_guard.py` + `--contrast` | ✅ | needs `ANTHROPIC_API_KEY` to run; prints n/a without it |
+| README for judges | ✅ draft | final pass at 16:45 with real results |
+| Private live-demo cases (Bata India, real role holders) | ✅ on Krishna's machine | `fixtures/private/` is gitignored; cases 11–13 |
 
 ## Checks (Lavya)
 
