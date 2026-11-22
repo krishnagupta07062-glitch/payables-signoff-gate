@@ -119,6 +119,13 @@ a {{ text-underline-offset: 3px; text-decoration-thickness: 1px; }}
 [data-testid="stDataFrame"] {{ border-radius: 12px; overflow: hidden; background: var(--card); }}
 [data-testid="stRadio"] label p {{ font-size: .9rem; }}
 
+/* toasts: white cards that slide in; errors get a short shake */
+[data-testid="stToast"] {{ background: var(--card) !important; border: 1px solid var(--line); border-radius: 14px !important;
+  box-shadow: var(--shadow); font-weight: 500; }}
+[data-testid="stAlertContainer"]:has([data-testid="stAlertContentError"]),
+[data-testid="stAlertContainer"]:has([data-testid="stAlertContentWarning"]) {{ animation: sg-shake .5s var(--ease) both; }}
+.stButton button[kind="primary"]:not(:disabled) {{ animation: sg-glow 2.8s ease-in-out 1s 2; }}
+
 /* components rendered by the app */
 .sg-badge {{ display: inline-flex; align-items: center; font-family: var(--mono); font-weight: 600;
   letter-spacing: .08em; text-transform: uppercase; border-radius: 999px; border: 1px solid; line-height: 1;
@@ -169,6 +176,9 @@ a {{ text-underline-offset: 3px; text-decoration-thickness: 1px; }}
 .sg-hero {{ font-size: 2.6rem; font-weight: 500; letter-spacing: -0.04em; line-height: 1.08; max-width: 22ch; }}
 .sg-hero mark {{ background: linear-gradient(transparent 64%, var(--lime) 64%); color: inherit; padding: 0 .05em; }}
 
+@keyframes sg-shake {{ 0%, 100% {{ transform: none; }} 20% {{ transform: translateX(-5px); }}
+  40% {{ transform: translateX(4px); }} 60% {{ transform: translateX(-3px); }} 80% {{ transform: translateX(2px); }} }}
+@keyframes sg-glow {{ 0%, 100% {{ box-shadow: 0 0 0 0 rgba(228,242,34,0); }} 50% {{ box-shadow: 0 0 0 6px rgba(228,242,34,.45); }} }}
 @keyframes sg-rise {{ from {{ opacity: 0; transform: translateY(6px); }} to {{ opacity: 1; transform: none; }} }}
 @keyframes sg-stamp {{ 0% {{ opacity: 0; transform: scale(1.06); }} 100% {{ opacity: 1; transform: none; }} }}
 @keyframes sg-breathe {{ 0%, 100% {{ opacity: 1; box-shadow: 0 0 0 0 rgba(199,120,0,.45); }}

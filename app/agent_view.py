@@ -5,7 +5,7 @@ Built for an AI agent (or a person) that reads the page instead of clicking thro
 - every block is a code block with a copy button: the Markdown decision report and the stored JSON;
 - the whole state is downloadable as one JSON file.
 Open it directly with ?view=agents. Reads only; it never approves or pays.
-Palette: near-black and grays with a hint of orange.
+Palette: mostly gray, with black and orange accents. A fixed jump bar links every section.
 """
 from __future__ import annotations
 
@@ -22,58 +22,74 @@ ORANGE = "#FF7A1A"
 
 CSS = """
 <style>
-:root { --a-bg:#0A0A0A; --a-card:#121212; --a-line:#262626; --a-text:#E6E6E6; --a-muted:#8F8F8F; --a-orange:#FF7A1A; }
+:root { --a-bg:#E2E2DF; --a-side:#D5D5D1; --a-card:#ECECE9; --a-line:#C7C7C2; --a-text:#141414; --a-muted:#55554F;
+        --a-black:#111111; --a-orange:#E2600A; }
 .stApp, [data-testid="stAppViewContainer"] { background: var(--a-bg) !important; color: var(--a-text); }
 [data-testid="stHeader"] { background: transparent !important; }
-[data-testid="stSidebar"] { background: #0F0F0F !important; border-right: 1px solid var(--a-line); }
-[data-testid="stSidebar"] *, .stApp p, .stApp li, .stApp span, .stApp label, .stApp h1, .stApp h2, .stApp h3
-  { color: var(--a-text); }
+[data-testid="stSidebar"] { background: var(--a-side) !important; border-right: 1px solid var(--a-line); }
+.stApp p, .stApp li, .stApp label, .stApp h1, .stApp h2, .stApp h3 { color: var(--a-text); }
 .stApp h1, .stApp h2, .stApp h3 { font-family: 'Geist Mono', ui-monospace, monospace !important; letter-spacing: -0.01em; }
-[data-testid="stMainBlockContainer"] h2 { font-size: 1.15rem !important; border-top: 1px solid var(--a-line);
-  padding-top: 1.4rem !important; }
+[data-testid="stMainBlockContainer"] { padding-bottom: 6rem; }
+[data-testid="stMainBlockContainer"] h2 { font-size: 1.2rem !important; border-top: 2px solid var(--a-black);
+  padding-top: 1.3rem !important; margin-top: 1.2rem; }
 [data-testid="stMainBlockContainer"] h2::before { content: "## "; color: var(--a-orange); }
-[data-testid="stMainBlockContainer"] h3 { font-size: .98rem !important; }
-[data-testid="stMainBlockContainer"] h3::before { content: "### "; color: #5A5A5A; }
-.stApp a { color: var(--a-text) !important; text-decoration-color: var(--a-orange) !important; }
+[data-testid="stMainBlockContainer"] h3 { font-size: 1rem !important; }
+[data-testid="stMainBlockContainer"] h3::before { content: "### "; color: #8A8A84; }
+.stApp a { color: var(--a-text) !important; text-decoration-color: var(--a-orange) !important; text-underline-offset: 3px; }
 .stApp a:hover { color: var(--a-orange) !important; }
 [data-testid="stCaptionContainer"] p { color: var(--a-muted) !important; }
-[data-testid="stCode"] pre { background: var(--a-card) !important; }
-[data-testid="stCode"] pre code { background: transparent !important; color: #D4D4D4 !important; }
-[data-testid="stCode"] pre code span { color: #CFCFCF !important; }
+/* code blocks are the black accent: easy to spot, one-click copy */
+[data-testid="stCode"] { border: 1px solid var(--a-black); border-radius: 10px; }
+[data-testid="stCode"] pre { background: var(--a-black) !important; }
+[data-testid="stCode"] pre code { color: #D6D6D2 !important; }
+[data-testid="stCode"] pre code span { color: #CFCFCB !important; }
 [data-testid="stCode"] .token.title, [data-testid="stCode"] .token.property,
-[data-testid="stCode"] .token.bold, [data-testid="stCode"] .token.keyword { color: var(--a-orange) !important; }
+[data-testid="stCode"] .token.bold, [data-testid="stCode"] .token.keyword { color: #FF8A3D !important; }
 [data-testid="stCode"] .token.string, [data-testid="stCode"] .token.url, [data-testid="stCode"] .token.code
-  { color: #A8A8A8 !important; }
-[data-testid="stCode"] .token.punctuation, [data-testid="stCode"] .token.table { color: #8A8A8A !important; }
-.stApp input { background: #161616 !important; color: var(--a-text) !important; border-color: #333 !important; }
-.stApp [data-baseweb="input"], .stApp [data-baseweb="base-input"] { background: #161616 !important; }
-[data-testid="stButtonGroup"] button { background: #141414 !important; color: var(--a-muted) !important;
-  border-color: #333 !important; }
-[data-testid="stButtonGroup"] button[aria-checked="true"], [data-testid="stButtonGroup"] button[kind*="Active"]
-  { background: #222 !important; color: var(--a-orange) !important; border-color: var(--a-orange) !important; }
-[data-testid="stButtonGroup"] button p { color: inherit !important; }
-[data-testid="stCode"] { border: 1px solid var(--a-line); border-radius: 10px; }
-.stApp code { background: #1A1A1A !important; color: #E0E0E0 !important; }
+  { color: #B4B4AE !important; }
+[data-testid="stCode"] .token.punctuation, [data-testid="stCode"] .token.table { color: #8C8C86 !important; }
+[data-testid="stCode"] button { color: #E6E6E2 !important; }
+[data-testid="stMarkdownContainer"] code { background: #D3D3CF !important; color: var(--a-text) !important; }
+[data-testid="stCode"] code, [data-testid="stCode"] pre > div { background: transparent !important; }
 .stApp [data-testid="stExpander"] details { background: var(--a-card) !important; border-color: var(--a-line) !important; }
-.stApp .stButton button, .stApp .stDownloadButton button { background: #161616 !important; color: var(--a-text) !important;
-  border: 1px solid #333 !important; }
-.stApp .stButton button:hover, .stApp .stDownloadButton button:hover { border-color: var(--a-orange) !important;
-  color: var(--a-orange) !important; }
-.stApp [data-testid="stDataFrame"] { background: var(--a-card); }
-.ag-kv { font-family: 'Geist Mono', ui-monospace, monospace; font-size: .95rem; line-height: 1.85; }
-.ag-kv b { color: var(--a-muted); font-weight: 400; display: inline-block; min-width: 15ch; }
-.ag-o { color: var(--a-orange) !important; }
-.ag-toc { font-family: 'Geist Mono', ui-monospace, monospace; font-size: .95rem; line-height: 1.9; columns: 2; }
+.stApp input { background: var(--a-card) !important; color: var(--a-text) !important; }
+.stApp .stButton button, .stApp .stDownloadButton button { background: var(--a-black) !important; color: #F0F0EC !important;
+  border: 1px solid var(--a-black) !important; }
+.stApp .stButton button:hover, .stApp .stDownloadButton button:hover { background: var(--a-orange) !important;
+  border-color: var(--a-orange) !important; color: #111 !important; }
+[data-testid="stButtonGroup"] button { background: var(--a-card) !important; color: var(--a-muted) !important;
+  border-color: var(--a-line) !important; }
+[data-testid="stButtonGroup"] button[aria-checked="true"] { background: var(--a-black) !important; color: #fff !important;
+  border-color: var(--a-black) !important; box-shadow: inset 0 -2px 0 var(--a-orange); }
+[data-testid="stButtonGroup"] button p { color: inherit !important; }
+.ag-kv { font-family: 'Geist Mono', ui-monospace, monospace; font-size: .98rem; line-height: 1.9; }
+.ag-kv b { color: var(--a-muted); font-weight: 400; display: inline-block; min-width: 17ch; }
+.ag-o { color: var(--a-orange) !important; font-weight: 600; }
+.ag-toc { font-family: 'Geist Mono', ui-monospace, monospace; font-size: .98rem; line-height: 2; columns: 2; }
+.ag-steps { font-family: 'Geist Mono', ui-monospace, monospace; font-size: .95rem; line-height: 1.8;
+  background: var(--a-card); border: 1px solid var(--a-line); border-left: 3px solid var(--a-orange);
+  border-radius: 10px; padding: .9rem 1.1rem; }
+.ag-top { font-family: 'Geist Mono', ui-monospace, monospace; font-size: .8rem; }
+/* fixed jump bar: always one click from any section */
+.ag-jump { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 999990;
+  background: var(--a-black); color: #BDBDB8; border-radius: 999px; padding: .5rem 1.1rem; border: 1px solid #6A6A64;
+  font-family: 'Geist Mono', ui-monospace, monospace; font-size: .85rem; box-shadow: 0 10px 30px -10px rgba(0,0,0,.45);
+  white-space: nowrap; animation: ag-up .4s cubic-bezier(.2,.7,.2,1) both; }
+.ag-jump a { color: #E8E8E4 !important; text-decoration: none !important; margin: 0 .45rem; }
+.ag-jump a:hover { color: var(--a-orange) !important; }
+.ag-jump .o { color: var(--a-orange); }
+@keyframes ag-up { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@media (prefers-reduced-motion: reduce) { .ag-jump { animation: none; } }
 </style>
 """
 
 ASCII = """<!doctype html><html><head><meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
- html,body{margin:0;height:100%;background:#0A0A0A;overflow:hidden}
- pre{margin:0;font:13px/15px 'Geist Mono',ui-monospace,monospace;color:#3A3A3A;white-space:pre;cursor:crosshair;
+ html,body{margin:0;height:100%;background:#111111;overflow:hidden;border-radius:12px}
+ pre{margin:0;font:13px/15px 'Geist Mono',ui-monospace,monospace;color:#4A4A46;white-space:pre;cursor:crosshair;
      user-select:none;height:100%}
- .o{color:#FF7A1A}.w{color:#E6E6E6}.g{color:#7A7A7A}
+ .o{color:#FF8A3D}.w{color:#EDEDEA}.g{color:#8A8A84}
 </style></head><body><pre id="p" aria-hidden="true"></pre><script>
 (() => {
  const el = document.getElementById('p'), RAMP = ' .:-=+*#%@';
@@ -127,6 +143,18 @@ ASCII = """<!doctype html><html><head><meta charset="utf-8">
 </script></body></html>"""
 
 
+NEXT_ACTION = {"ESCALATED": "await_human_approval (Humans view > Inbox > Approve or Reject)",
+               "APPROVED": "payment_pending (a person can press Retry payment)",
+               "PAID": "none (paid exactly once)", "REJECTED": "none (rejected by a person)",
+               "DECIDED": "none"}
+
+
+def next_action(d: dict) -> str:
+    if d["state"] == "DECIDED" and d["verdict"] == "BLOCK":
+        return "none (blocked; do not pay, do not change bank details)"
+    return NEXT_ACTION.get(d["state"], "none")
+
+
 def snapshot() -> dict:
     """Everything the page shows, as one JSON-able dict."""
     decisions = []
@@ -135,6 +163,7 @@ def snapshot() -> dict:
         decisions.append({**{k: d.get(k) for k in ("request_id", "verdict", "state", "kind", "rule_ids")},
                           "decision": json.loads(row["decision"]) if row.get("decision") else None,
                           "approvals": store.approvals_for(d["request_id"])})
+        decisions[-1]["next_action"] = next_action(decisions[-1])
     return {"payments_mode": razorpayx.mode(), "ledger": ledger.verify(), "decisions": decisions,
             "payouts": store.list_payouts(),
             "outbox": [{k: v for k, v in o.items() if k != "body"} for o in store.list_outbox()],
@@ -148,6 +177,11 @@ def render() -> None:
     decisions = snap["decisions"]
     waiting = [d for d in decisions if d["state"] == store.ESCALATED]
     lv = snap["ledger"]
+
+    st.markdown("<div class='ag-jump'><span class='o'>jump</span> "
+                "<a href='#summary'>summary</a><a href='#how-to-use'>how-to</a><a href='#index'>index</a>"
+                "<a href='#decisions'>decisions</a><a href='#ledger'>ledger</a><a href='#payouts'>payouts</a>"
+                "<a href='#export'>export</a></div>", unsafe_allow_html=True)
 
     st.header("summary", anchor="summary")
     counts = {v: sum(1 for d in decisions if d["verdict"] == v) for v in ("ALLOW", "BLOCK", "ESCALATE")}
@@ -167,6 +201,18 @@ def render() -> None:
                         "ledger_ok": lv["ok"], "ledger_rows": lv["rows"], "payouts": len(snap["payouts"]),
                         "payments_mode": snap["payments_mode"]}, indent=2), language="json")
 
+    st.header("how to use", anchor="how-to-use")
+    st.markdown(
+        "<div class='ag-steps'>"
+        "1. Read <a href='#summary'>#summary</a> for counts and anything waiting for a person.<br>"
+        "2. Every decision has an anchor <code>#d-&lt;request_id&gt;</code> (lower case), a <code>next_action</code> "
+        "line, its full report and its stored JSON. Each block has a copy button.<br>"
+        "3. This view is read-only. Approving, rejecting and paying happen only in the Humans view, by a person.<br>"
+        "4. Download everything at once from <a href='#export'>#export</a>. Programmatic access: the MCP server "
+        "tools <code>gate_evaluate</code> (never pays) and <code>ledger_verify</code>.<br>"
+        "5. Link straight here with <code>?view=agents</code>."
+        "</div>", unsafe_allow_html=True)
+
     st.header("index", anchor="index")
     links = ["<a href='#summary'>#summary</a>", "<a href='#decisions'>#decisions</a>"]
     links += [f"&nbsp;&nbsp;<a href='#d-{d['request_id'].lower()}'>#{d['request_id']}</a> "
@@ -180,7 +226,11 @@ def render() -> None:
         st.caption("No decisions yet. Seed or run one from the Humans view.")
     for d in decisions:
         st.subheader(f"{d['request_id']} · {d['verdict']} · {d['state']}", anchor=f"d-{d['request_id'].lower()}")
-        st.caption(f"kind {d.get('kind') or '?'} · rules {', '.join(d['rule_ids'] or []) or '—'}")
+        st.code("\n".join([f"request_id  = {d['request_id']}", f"verdict     = {d['verdict']}",
+                           f"state       = {d['state']}", f"kind        = {d.get('kind') or '?'}",
+                           f"rules       = {', '.join(d['rule_ids'] or []) or '-'}",
+                           f"next_action = {d['next_action']}"]), language="text")
+        st.markdown("<div class='ag-top'><a href='#index'>↑ index</a></div>", unsafe_allow_html=True)
         st.code(report.decision_report_md(d["request_id"]), language="markdown", wrap_lines=True)
         with st.expander(f"stored JSON · {d['request_id']}"):
             st.code(json.dumps(d, indent=2, ensure_ascii=False, default=str), language="json", wrap_lines=True)

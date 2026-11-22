@@ -37,6 +37,18 @@ st.set_page_config(page_title="Payables Sign-Off Gate", layout="wide")
 theme.inject()
 store.init_db()
 
+
+def nudge(msg: str, icon: str, later: bool = False) -> None:
+    """A toast. later=True keeps it for the next run, for actions that st.rerun() right after."""
+    if later:
+        st.session_state.setdefault("toasts", []).append((msg, icon))
+    else:
+        st.toast(msg, icon=icon)
+
+
+for _msg, _icon in st.session_state.pop("toasts", []):
+    st.toast(_msg, icon=_icon)
+
 STATE_NOTE = {"DECIDED": "", "ESCALATED": "waiting for a person", "APPROVED": "approved", "REJECTED": "rejected",
               "PAID": "paid"}
 
@@ -68,6 +80,9 @@ with st.sidebar:
     else:
         st.caption("No external calls recorded yet.")
     v = ledger.verify()
+    if not v["ok"] and not st.session_state.get("nudged_ledger"):
+        st.session_state["nudged_ledger"] = True
+        nudge(f"Ledger broken at row {v['first_bad_row']}: check the Ledger tab", ":material/gpp_bad:")
     st.markdown(f"<div class='sg-muted' style='font-size:.92rem'>"
                 f"{theme.status_dot('VERIFIED' if v['ok'] else 'CONTRADICTED')} &nbsp;"
                 + html.escape("Ledger chain OK" if v["ok"] else f"Ledger broken at row {v['first_bad_row']}")
@@ -195,16 +210,21 @@ def decision_card(request_id: str, where: str = "inbox") -> None:
             if store.record_approval(request_id, approver, True, note):
                 res = worker.pay_approved(request_id, approver)
                 st.session_state["flash"] = f"Approved. Payment: {res}"
+                nudge(f"Approved {request_id}", ":material/check_circle:", later=True)
             else:
                 st.session_state["flash"] = "Already decided (double click ignored)."
+                nudge("Already decided (double click ignored).", ":material/front_hand:", later=True)
             st.rerun()
         if r_col.button("Reject", key=f"{where}-reject-{request_id}", icon=":material/close:", width="stretch"):
             ok = store.record_approval(request_id, approver, False, note)
             st.session_state["flash"] = "Rejected." if ok else "Already decided (double click ignored)."
+            nudge(f"Rejected {request_id}: nothing will be paid" if ok else "Already decided (double click ignored).",
+                  ":material/block:" if ok else ":material/front_hand:", later=True)
             st.rerun()
     elif row["state"] == store.APPROVED and action:
         if st.button("Retry payment", key=f"{where}-retry-{request_id}", icon=":material/refresh:"):
             st.session_state["flash"] = f"Payment: {worker.pay_approved(request_id, approver)}"
+            nudge("Payment retried", ":material/refresh:", later=True)
             st.rerun()
 
 
@@ -216,6 +236,9 @@ with tab_inbox:
         st.info("No decisions yet. Run the pipeline, or use Developer → Seed demo decisions in the sidebar.")
     else:
         pending = [d for d in decisions if d["state"] == store.ESCALATED]
+        if pending and st.session_state.get("nudged_pending") != len(pending):
+            st.session_state["nudged_pending"] = len(pending)
+            nudge(f"{len(pending)} waiting for a person: open the Inbox", ":material/front_hand:")
         wait = (f"<span class='sg-state wait'><span class='sg-dot sg-live' style='color:var(--warn)'></span>"
                 f"<b class='sg-mono'>{len(pending)}</b>&nbsp;waiting for a person</span>" if pending
                 else f"<span class='sg-muted'>{len(pending)} waiting for a person</span>")
@@ -283,7 +306,13 @@ with tab_demo:
         crash = step["id"] == "crash"
         if h_r.button("Run" + (" + crash" if crash else ""), key=f"demo-run-{step['id']}", width="stretch",
                       icon=":material/play_arrow:"):
-            ds[step["id"]] = demo.run_step(step["id"], crash=crash)
+            ds[step["id"]] = r = demo.run_step(step["id"], crash=crash)
+            v_ = r.get("verdict")
+            nudge(f"{v_} · {' · '.join(r.get('rule_ids') or [])}",
+                  {"BLOCK": ":material/gpp_bad:", "ESCALATE": ":material/front_hand:"}.get(v_, ":material/check_circle:"),
+                  later=True)
+            if (r.get("crash") or {}).get("outbox_state") == "unknown":
+                nudge("Payer killed mid-payout: press Resume", ":material/bolt:", later=True)
             st.rerun()
         if not res:
             continue
@@ -295,6 +324,7 @@ with tab_demo:
             if st.button(f"Approve as {approver}", key=f"demo-approve-{step['id']}", type="primary",
                          icon=":material/check:"):
                 res["approval"] = demo.approve(rid, approver, "Called back on the number on file; confirmed.")
+                nudge(f"Approved by {approver}", ":material/check_circle:", later=True)
                 st.rerun()
         if res.get("approval"):
             ap = res["approval"]
@@ -313,6 +343,7 @@ with tab_demo:
                          "did the money go?", icon=":material/bolt:")
                 if st.button("Resume", key="demo-resume", type="primary", icon=":material/replay:"):
                     res["resumed"] = demo.resume()
+                    nudge("Resumed with the same key: still one payout", ":material/replay:", later=True)
                     st.rerun()
         if crash and res.get("resumed") is not None:
             n = len(demo.payouts_for_case("01_calm"))
@@ -374,6 +405,14 @@ with tab_run:
             if crash and res.decision.verdict.value == "ALLOW" and res.decision.action:
                 st.session_state["last_run"]["crash"] = worker.pay_with_crash(res.decision.request_id)
             st.session_state["selected"] = res.decision.request_id
+            got_ = res.decision.verdict.value
+            if got_ != case.get("expected_verdict"):
+                nudge(f"Gate says {got_}, expected {case.get('expected_verdict')}", ":material/warning:")
+            else:
+                nudge(f"Gate says {got_}", {"BLOCK": ":material/gpp_bad:", "ESCALATE": ":material/front_hand:"}
+                      .get(got_, ":material/check_circle:"))
+            if st.session_state["last_run"].get("crash"):
+                nudge("Payer crashed mid-payout: press Resume", ":material/bolt:")
         last = st.session_state.get("last_run")
         if last:
             row = store.get_decision_row(last["request_id"])
@@ -398,6 +437,7 @@ with tab_run:
                     n = len([p for p in store.list_payouts() if p["idempotency_key"] == cr["idempotency_key"]])
                     last["crash"] = None
                     st.session_state["flash_run"] = f"Resumed: {out or 'nothing pending'} · payouts for this invoice: {n}"
+                    nudge(f"Resumed: payouts for this invoice: {n}", ":material/replay:", later=True)
                     st.rerun()
             if st.session_state.get("flash_run"):
                 st.success(st.session_state.pop("flash_run"))
@@ -411,6 +451,8 @@ with tab_ledger:
     c1, c2 = st.columns([1, 4])
     if c1.button("Verify chain", type="primary", icon=":material/link:"):
         res = ledger.verify()
+        nudge("Chain intact" if res["ok"] else f"Chain broken at row {res['first_bad_row']}",
+              ":material/verified:" if res["ok"] else ":material/gpp_bad:")
         if res["ok"]:
             c2.success(f"Chain intact: {res['rows']} rows replayed, head {res.get('head', '')[:16]}…")
         else:
@@ -427,8 +469,10 @@ with tab_payouts:
     b1, b2, _ = st.columns([1, 1, 4])
     if b1.button("Refresh status", icon=":material/refresh:"):
         st.session_state["pflash"] = f"Status changes: {executor.refresh_payouts() or 'none'}"
+        nudge("Payout status refreshed", ":material/refresh:")
     if b2.button("Resume unfinished", icon=":material/replay:"):
         st.session_state["pflash"] = f"Resumed: {executor.resume() or 'nothing to resume'}"
+        nudge("Resume finished", ":material/replay:")
     if st.session_state.get("pflash"):
         st.info(st.session_state.pop("pflash"))
     if razorpayx.mode() == "test":

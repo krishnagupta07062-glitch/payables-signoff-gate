@@ -84,3 +84,30 @@ def test_agent_view_empty_db(db):
     at.run()
     assert not at.exception
     assert any("No decisions yet" in c.value for c in at.caption)
+
+
+def test_nudges_on_waiting_approve_and_double_click(db):
+    dev_seed.seed()
+    at = st_testing.AppTest.from_file(APP, default_timeout=30).run()
+    assert not at.exception
+    assert any("waiting for a person" in t.value for t in at.toast)        # nudge: people are waiting
+    next(b for b in at.button if b.label == "ESCALATE · DEMO-5-bankchange").click().run()
+    next(b for b in at.button if b.label.endswith("Approve")).click().run()
+    assert not at.exception
+    assert any("Approved DEMO-5-bankchange" in t.value for t in at.toast)
+    assert store.get_decision_row("DEMO-5-bankchange")["state"] == store.PAID
+
+
+def test_nudges_on_run_mismatch_free_and_crash(db, monkeypatch):
+    monkeypatch.setenv("MOCK", "1")
+    at = st_testing.AppTest.from_file(APP, default_timeout=60).run()
+    sb = at.selectbox[0]
+    sb.select(next(o for o in sb.options if o.startswith("01_calm"))).run()
+    at.toggle[0].set_value(True).run()
+    next(b for b in at.button if b.label.endswith("Run the gate")).click().run()
+    assert not at.exception
+    toasts = [t.value for t in at.toast]
+    assert any(t.startswith("Gate says ALLOW") and "expected" not in t for t in toasts)
+    assert any("crashed mid-payout" in t for t in toasts)
+    next(b for b in at.button if b.label == "Verify chain").click().run()
+    assert any(t.value == "Chain intact" for t in at.toast)
