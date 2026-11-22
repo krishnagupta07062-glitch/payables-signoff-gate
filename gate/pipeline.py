@@ -140,6 +140,8 @@ def run(request: Request, budget: RunBudget, vendor: Optional[Vendor] = None,
         execute: bool = True, today: Optional[date] = None) -> RunResult:
     trace: list[str] = []
     mock = os.environ.get("MOCK") == "1"
+    stored_claims = mock or os.environ.get("MOCK_CLAIMS") == "1"   # live checks, stored extraction
+    stored_checks = mock or os.environ.get("MOCK_CHECKS") == "1"   # live extraction, stored checks
 
     # 1. the trusted base record comes first; the email may only fill open slots
     if vendor is None:
@@ -152,8 +154,8 @@ def run(request: Request, budget: RunBudget, vendor: Optional[Vendor] = None,
 
     # 2. extract claims (the model never decides)
     try:
-        claims = extractor.extract(request, budget, mock_claims=mock_claims if mock else None)
-        if not mock and claims.extraction_notes.startswith("extraction failed") and mock_claims is not None:
+        claims = extractor.extract(request, budget, mock_claims=mock_claims if stored_claims else None)
+        if not stored_claims and claims.extraction_notes.startswith("extraction failed") and mock_claims is not None:
             trace.append(f"extract: {claims.extraction_notes}; falling back to stored claims")
             claims = extractor.extract(request, budget, mock_claims=mock_claims)
     except BudgetExceeded as e:
@@ -165,9 +167,9 @@ def run(request: Request, budget: RunBudget, vendor: Optional[Vendor] = None,
     # 3. verify every claim against records
     history = _store_call("history_for", None, trace=trace, default=[]) or []
     checks: list[Check]
-    if mock and mock_checks is not None:
+    if stored_checks and mock_checks is not None:
         checks = [check_from_dict(c) for c in mock_checks]
-        trace.append(f"verify: MOCK=1, {len(checks)} stored checks")
+        trace.append(f"verify: {len(checks)} stored checks")
     else:
         try:
             from gate import verifiers

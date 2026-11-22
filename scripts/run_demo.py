@@ -1,7 +1,9 @@
 """Run every demo case and compare against the expected verdict. OWNER: Krishna.
 
     python scripts/run_demo.py                 # all cases (MOCK=1 by default: offline, no credits)
-    python scripts/run_demo.py --live          # MOCK=0: real Claude extraction and live checks
+    python scripts/run_demo.py --live          # MOCK=0: real model extraction and live checks
+    python scripts/run_demo.py --live-llm      # real extraction, stored checks (synthetic cases)
+    python scripts/run_demo.py --live-checks --only-private   # live Crustdata checks, stored extraction
     python scripts/run_demo.py --case 3        # one case number
     python scripts/run_demo.py --trace         # print each case's pipeline trace and reasons
     python scripts/run_demo.py --contrast      # also ask a plain model guard (raw email) for each case
@@ -21,12 +23,21 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--live", action="store_true", help="MOCK=0: call Claude and live verifiers")
+    ap.add_argument("--live", action="store_true", help="MOCK=0: call the model and live verifiers")
+    ap.add_argument("--live-llm", action="store_true", help="real extraction, stored checks")
+    ap.add_argument("--live-checks", action="store_true", help="live checks, stored extraction")
+    g = ap.add_mutually_exclusive_group()
+    g.add_argument("--skip-private", action="store_true", help="leave out fixtures/private cases")
+    g.add_argument("--only-private", action="store_true", help="only fixtures/private cases")
     ap.add_argument("--case", type=int, help="only this case number")
     ap.add_argument("--trace", action="store_true")
     ap.add_argument("--credits", type=float, default=40.0, help="credit ceiling for the whole demo run")
     ap.add_argument("--contrast", action="store_true", help="compare with a plain model guard reading the raw email")
     a = ap.parse_args()
+    if a.live_llm:
+        os.environ.update(MOCK="0", MOCK_CHECKS="1")
+    elif a.live_checks:
+        os.environ.update(MOCK="0", MOCK_CLAIMS="1")
     os.environ["MOCK"] = "0" if a.live else os.environ.get("MOCK", "1")
     if not os.environ.get("GATE_DB"):  # a fresh database per demo run, so earlier runs never count as history
         import time
@@ -41,6 +52,9 @@ def main() -> int:
     budget = RunBudget(max_credits=a.credits, max_seconds=1800)
     rows, failures = [], 0
     for path in all_case_files():
+        is_private = "private" in path.parts
+        if (a.skip_private and is_private) or (a.only_private and not is_private):
+            continue
         case_no = int(path.name[:2]) if path.name[:2].isdigit() else 0
         if a.case and case_no != a.case:
             continue
@@ -83,7 +97,9 @@ def main() -> int:
               else "\nbaseline guard unavailable (no ANTHROPIC_API_KEY?)")
     s = budget.summary()
     print(f"\n{len(rows) - failures}/{len(rows)} cases as expected | credits {s['credits']} | "
-          f"calls {s['calls']} ({s['cached_calls']} cached) | {s['seconds']}s | MOCK={os.environ['MOCK']}")
+          f"calls {s['calls']} ({s['cached_calls']} cached) | {s['seconds']}s | MOCK={os.environ['MOCK']}"
+          + (" (stored checks)" if os.environ.get("MOCK_CHECKS") == "1" else "")
+          + (" (stored extraction)" if os.environ.get("MOCK_CLAIMS") == "1" else ""))
     return 1 if failures else 0
 
 
