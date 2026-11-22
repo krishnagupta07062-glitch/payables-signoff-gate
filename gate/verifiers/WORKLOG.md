@@ -24,6 +24,12 @@ Tests: `tests/verifiers/` has 39 tests. Full suite: 96 passed, offline.
 
 ## Log
 
+### ~16:10: near-duplicate false alarm on sequential invoices (bug fix, from the SOP gatekeeper results)
+- Lesson from our earlier gatekeeper research (`Desktop/SOP/gatekeeper`): measure over-refusal ("valid sent to a person"), not just missed fraud, and test near-misses. "Extract-then-code leaks near-misses."
+- Tested `near_duplicate_invoice` on near-misses. In the standard Indian format `INV/2026-27/NNNN`, the vendor's **next** bill scored 90-95 against the last one (`0042` vs `0043`, `0142`, `0024`), so every next invoice would have escalated (E4).
+- Fix: a similar number counts only if the **amount matches too** (±0.5%), or an amount is unreadable (stay cautious). Same amount within 10 days still counts whatever the number. A re-sent bill with a tweaked number is still caught.
+- 3 new tests. 151 passed; demo 17/17 offline, 3/3 live private.
+
 ### ~15:55: finished the Integration prompt (Lavya 2)
 - Looked for new instructions for Lavya: none in the repo since the last push.
 - The Lavya 2 prompt still had open parts, now done:

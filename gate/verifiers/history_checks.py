@@ -68,6 +68,11 @@ def duplicate_invoice(request: Request, claims: Claims, vendor: Vendor, history:
 
 def near_duplicate_invoice(request: Request, claims: Claims, vendor: Vendor,
                            history: Optional[list[dict]]) -> Check:
+    """CONTRADICTED (policy E4, escalate) when an earlier bill from the same vendor looks like this one re-sent:
+    - a similar invoice number (ratio >= 90) AND the same amount (+-0.5%), or an amount we can't read; or
+    - the same amount (+-0.5%) within 10 days, whatever the number.
+    A similar number with a different amount is the vendor's next bill, not a duplicate.
+    """
     name = "near_duplicate_invoice"
     if history is None:
         return unverifiable(name, "Payment history unavailable.")
@@ -84,15 +89,20 @@ def near_duplicate_invoice(request: Request, claims: Claims, vendor: Vendor,
             continue  # an exact duplicate is duplicate_invoice's job (BLOCK)
         same_vendor = row.get("vendor_id") == vendor.vendor_id
         theirs = norm_invoice_number(row.get("invoice_number"))
+        amt, ramt = claims.amount_inr, row.get("amount_inr")
+        # None when either amount is unknown: then we can't rule a re-sent bill out, so stay cautious
+        same_amount = None if not (amt and ramt) else abs(amt - float(ramt)) <= float(ramt) * NEAR_DUP_AMOUNT_PCT / 100
         if same_vendor and mine and theirs:
             score = fuzz.ratio(mine, theirs)
-            if score >= NEAR_DUP_SCORE and (best is None or score > best["score"]):
+            # A similar number alone is normal: a vendor's next bill is INV/2026-27/0043 after 0042 (ratio 90).
+            # It is a likely re-send only if the amount matches too (or an amount is unknown).
+            if score >= NEAR_DUP_SCORE and same_amount is not False and (best is None or score > best["score"]):
                 best = {"score": round(score, 1), "prior_request_id": row.get("request_id"),
-                        "reason": f"invoice number {claims.invoice_number} is {score:.0f}% similar to {row.get('invoice_number')}"}
-        amt, ramt = claims.amount_inr, row.get("amount_inr")
+                        "reason": f"invoice number {claims.invoice_number} is {score:.0f}% similar to "
+                                  f"{row.get('invoice_number')}"
+                                  + (" and the amount is the same" if same_amount else " (amount unknown)")}
         d1 = _date(row.get("invoice_date"))
-        if same_vendor and amt and ramt and d0 and d1 and abs(amt - float(ramt)) <= float(ramt) * NEAR_DUP_AMOUNT_PCT / 100 \
-                and abs((d0 - d1).days) <= NEAR_DUP_DAYS:
+        if same_vendor and same_amount and d0 and d1 and abs((d0 - d1).days) <= NEAR_DUP_DAYS:
             if best is None:
                 best = {"score": 100.0, "prior_request_id": row.get("request_id"),
                         "reason": f"same vendor and amount (Rs {float(ramt):,.2f}) within {abs((d0 - d1).days)} days "

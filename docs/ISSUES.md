@@ -17,6 +17,8 @@ Append only. Each entry: the file, the owner, the failing test or command, and t
 
 ## checks
 
+- **~16:10, from Lavya (checks), for everyone: E4 no longer fires on a vendor's next invoice (bug fix).** `near_duplicate_invoice` scored invoice numbers alone. In the standard `INV/2026-27/NNNN` format, `0043` after `0042` scores 90 (and `0142` 95, `0024` 90), so every sequential bill would have escalated (E4). Now a similar number counts only with the same amount (±0.5%), or when an amount is unreadable; same amount within 10 days still counts. A re-sent bill with a tweaked number is still caught. No demo case changes (17/17 offline, 3/3 live private). Tests: `tests/verifiers/test_history_checks.py::test_next_sequential_invoice_is_not_a_near_duplicate` and two more.
+
 - **~15:55, from Lavya (checks), for everyone: integration summary (Lavya 2 prompt), and polish (Lavya 3) done.**
   - **Demo:** `python scripts/run_demo.py --live-checks --only-private` gives 3/3 as expected (11 BLOCK, 12 BLOCK, 13 ESCALATE), and `MOCK=1` gives 17/17.
   - **Credits:**

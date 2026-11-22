@@ -37,6 +37,28 @@ def test_near_duplicate(invoice_request, invoice_claims, vendor):
     assert hc.near_duplicate_invoice(invoice_request, invoice_claims, vendor, None).status == U
 
 
+def test_next_sequential_invoice_is_not_a_near_duplicate(invoice_request, invoice_claims, vendor):
+    # near-miss: INV/2026-27/0042 was paid; 0043, 0142 and 0024 are the vendor's other bills (different amounts).
+    # Before the fix each scored 90-95 on the number alone and escalated (E4).
+    for prior in ("INV/2026-27/0043", "INV/2026-27/0142", "INV/2026-27/0024"):
+        row = _row(invoice_number=prior, invoice_key="other", amount_inr=98000.0, invoice_date="2026-11-01")
+        c = hc.near_duplicate_invoice(invoice_request, invoice_claims, vendor, [row])
+        assert c.status == V, (prior, c.note)
+
+
+def test_similar_number_same_amount_is_a_near_duplicate(invoice_request, invoice_claims, vendor):
+    # the classic re-send with a tweaked number, even months later
+    row = _row(invoice_number="INV/2026-27/0043", invoice_key="other", invoice_date="2026-06-01")
+    c = hc.near_duplicate_invoice(invoice_request, invoice_claims, vendor, [row])
+    assert c.status == C and "amount is the same" in c.note
+
+
+def test_similar_number_unknown_amount_stays_cautious(invoice_request, invoice_claims, vendor):
+    invoice_claims.amount_inr = None
+    row = _row(invoice_number="INV/2026-27/0043", invoice_key="other")
+    assert hc.near_duplicate_invoice(invoice_request, invoice_claims, vendor, [row]).status == C
+
+
 def test_account_on_master(vendor):
     assert hc.account_on_vendor_master(Claims(pay_to_account=ACCT), vendor).status == V
     assert hc.account_on_vendor_master(Claims(), vendor).status == V
