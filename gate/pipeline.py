@@ -149,8 +149,6 @@ def run(request: Request, budget: RunBudget, vendor: Optional[Vendor] = None,
         trace.append("vendor: not on the vendor master")
     trace.append(f"vendor: {vendor.vendor_id} {vendor.legal_name}")
     _store_call("save_request", request, trace=trace)
-    _ledger("request", {"request_id": request.request_id, "kind": request.kind.value,
-                        "sender": request.sender_email, "vendor_id": vendor.vendor_id}, trace)
 
     # 2. extract claims (the model never decides)
     try:
@@ -185,10 +183,7 @@ def run(request: Request, budget: RunBudget, vendor: Optional[Vendor] = None,
     # 4. decide in code
     decision = policy.decide(request, claims, vendor, checks, today=today)
     trace.append(f"decide: {decision.verdict.value} {decision.rule_ids}")
-    _store_call("save_decision", decision, trace=trace)
-    _ledger("decision", {"request_id": decision.request_id, "verdict": decision.verdict.value,
-                         "rules": decision.rule_ids, "action_hash": decision.action_hash,
-                         "policy_version": decision.policy_version}, trace)
+    _store_call("save_decision", decision, trace=trace)  # the store also writes the ledger event
 
     # 5. act only on ALLOW (ESCALATE waits for a person in the approval queue)
     payout = None

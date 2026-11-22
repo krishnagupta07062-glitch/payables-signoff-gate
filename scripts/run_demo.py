@@ -28,6 +28,10 @@ def main() -> int:
     ap.add_argument("--contrast", action="store_true", help="compare with a plain model guard reading the raw email")
     a = ap.parse_args()
     os.environ["MOCK"] = "0" if a.live else os.environ.get("MOCK", "1")
+    if not os.environ.get("GATE_DB"):  # a fresh database per demo run, so earlier runs never count as history
+        import time
+        Path("runs").mkdir(exist_ok=True)
+        os.environ["GATE_DB"] = str(Path("runs") / f"demo-{time.strftime('%H%M%S')}.sqlite")
 
     from gate.pipeline import all_case_files, load_vendors, request_from_dict, run_case  # after MOCK is set
     from gate import baseline_guard
