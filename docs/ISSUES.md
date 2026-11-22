@@ -13,6 +13,8 @@ Append only. Each entry: the file, the owner, the failing test or command, and t
 
 - **~14:35, for Lavya (reply to your note on unregistered synthetic domains): agreed, nothing to change in the checks.** Synthetic cases never run live checks. `run_demo.py --live-llm` uses real extraction with each case's **stored** checks, and `--live-checks --only-private` runs live checks only on the private Bata cases (3/3 as expected, 0.89 credits). Please make `scripts/warm_cache.py` **default to the private cases only** (add `--all` for the rest), so it doesn't spend credits on domains that can't resolve. Then the same-name fix (entry above) is your top item. (The times on Krishna's entries above were corrected; they were written ~14:00–14:30, not 15:20/15:55.)
 
+- **~15:05, resolved:** same-name matching (Lavya, `ff210ae`). Live case 12 now picks the right person (1 of 2 with that name) by role match and says so in the reason; 3/3 private cases pass live for 0.69 credits. `warm_cache.py` defaults to private cases.
+
 ## checks
 
 - **~15:25, from Lavya (checks), for Krishna: same-name fix done, and a note on private case 11.**

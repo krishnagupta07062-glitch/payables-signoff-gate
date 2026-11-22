@@ -101,7 +101,7 @@ Committed fixtures use synthetic companies and people. Live demos against real c
 | Risk | Guard |
 |---|---|
 | An honest vendor is blocked because its data is sparse | Missing data is UNVERIFIABLE, which escalates with the reason; it never blocks |
-| A person in the index shares a name with the requester | Person checks filter by the vendor's company id, not by name alone |
+| A person in the index shares a name with the requester | Person checks filter by the vendor's company id, then pick the candidate whose title matches the claimed role; if that is still ambiguous the fact is UNVERIFIABLE (escalate), never "left the company". This happened live: Bata India has two people with the same name in the index, and the reason names which one was matched and why |
 | Stale records (someone changed jobs this week) | Records older than 30 days count as stale and escalate; every source shows its date |
 | Reviewer fatigue from too many escalations | Each escalation names its rule and the missing fact, so a reviewer can clear it quickly |
 | Personal data | Only name, title and dates are kept from person records; accounts are stored as last 4 digits plus a keyed hash (DPDP data minimisation) |
