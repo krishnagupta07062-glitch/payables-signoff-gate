@@ -16,7 +16,7 @@ def test_ui_renders_and_approves(db):
     dev_seed.seed()
     at = st_testing.AppTest.from_file(APP, default_timeout=30).run()
     assert not at.exception
-    assert len(at.tabs) == 4
+    assert len(at.tabs) == 5
     # select the escalated bank change and approve it
     next(b for b in at.button if b.label == "ESCALATE · DEMO-5-bankchange").click().run()
     assert not at.exception

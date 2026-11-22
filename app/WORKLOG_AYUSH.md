@@ -117,3 +117,24 @@ Newest entries go at the bottom. Each entry lists what changed, how it was teste
   - **Live crash:** case 07 is paid in a child process that dies right after Razorpay accepted the payout (before we recorded it). `resume()` finds it by `reference_id` (`pout_U39vuKxQCDWYuO`) and adopts it instead of paying again, so there's exactly one payout.
 - Full suite still **79 passed** offline (tests force `PAYMENTS_MODE=mock`).
 - For the demo: start the UI with `PAYMENTS_MODE=test` (from `.env`). Payouts tab → "Refresh status" shows `processing` honestly. To show `processed`, move the payout in the RazorpayX dashboard (Payouts → the payout → mark processed in test mode).
+
+---
+
+## 22 Nov 2026, ~14:40–15:00 IST: Stage 3 (Polish)
+
+Read `docs/ISSUES.md` after pulling. The `## pay` section was empty (no bugs reported against Ayush's files). Krishna added **case 5b** (first invoice to the new account → ESCALATE E2 → approve → payout) and said to start Stage 3.
+
+- **Demo tab** (first tab in `app/approvals.py`; logic in `app/demo.py`, testable without the UI):
+  - "⟲ Start fresh demo" creates a new `runs/demo-ui-HHMMSS.sqlite` and loads the vendor master;
+  - five steps, each with a 🎙 "what to say" line, a ▶ Run button, a large verdict badge and the reasons;
+  - non-verified checks are shown with their notes and sources (the contradicting source is on screen for the BLOCK);
+  - the steps: 03 lookalike → BLOCK B2; 05 genuine bank change → ESCALATE E1 → Approve (nothing to pay, by design); 05b → ESCALATE E2 → Approve → payout; 01 + crash → "Payer killed, outbox unknown" → ♻ Resume → "payouts for this invoice: 1"; 02 re-sent → BLOCK B1, still 1 payout.
+- **Export decision report** (`app/report.py`): Markdown with the request (raw text only as SHA-256), rules fired, claims (account last 4 only), every check with status/value/note/sources, the payment action and hashes, bank accounts old vs claimed, approvals, payouts, and the ledger rows for the request with chain status. Download buttons are on every decision card and every demo step.
+- **`docs/DEMO_SCRIPT.md`**: the 2-minute script, opening with the customer's request in their own words, with timings, on-screen cues, what to say, setup and backup answers. (Krishna owns `docs/`, but the Stage 3 prompt assigns this file to Ayush.)
+- Replaced the deprecated Streamlit `use_container_width` with `width="stretch"`.
+- Tests: `tests/pay/test_demo.py` covers the whole walkthrough offline (2 payouts in total: 05b and 01, each once), the report contents (no full account number, no raw email), and a headless click-through of the Demo tab. **139 passed** (whole repo). A Streamlit server boot check passes (`/_stcore/health` ok).
+- Found and reported in `docs/ISSUES.md` (for Krishna): the fixture account hashes were made with the default `ACCOUNT_HASH_KEY`. Setting the team key makes case 05b BLOCK. **For the demo, leave `ACCOUNT_HASH_KEY` empty.**
+
+### Left for Ayush (human)
+- Rehearse with `docs/DEMO_SCRIPT.md`, then **record the 2-minute video at ~17:15** from the Demo tab.
+- From 17:15: bug fixes only.

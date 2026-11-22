@@ -29,3 +29,5 @@ Append only. Each entry: the file, the owner, the failing test or command, and t
   Cost of the whole live private run: 0.89 credits, 15 calls (5 cached).
 
 ## pay
+
+- **~15:00, from Ayush (pay), for Krishna: fixture account hashes depend on `ACCOUNT_HASH_KEY`.** `fixtures/build_fixtures.py` hashed the synthetic accounts with the *default* key (`keys.account_hash` with `ACCOUNT_HASH_KEY` unset): `fixtures/vendors.json` V-ACME `account_hash` `fd94fbb31e3c…` = `account_hash("123456789012")` with no key. Anyone who sets the team's `ACCOUNT_HASH_KEY` in `.env` gets different hashes, so the claimed accounts no longer match the master. Repro: `ACCOUNT_HASH_KEY=test-key MOCK=1 python -c "from app import demo; ..."` runs case 05b → **BLOCK** instead of ESCALATE E2 (found by `tests/pay/test_demo.py` before I pinned the key). Options: (a) rebuild the fixtures with the team key and tell everyone to set it, or (b) say in the README and `.env.example` that the synthetic demo runs with `ACCOUNT_HASH_KEY` empty. For now `docs/DEMO_SCRIPT.md` says to leave it empty.

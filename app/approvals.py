@@ -29,7 +29,7 @@ except OSError:
 
 import streamlit as st  # noqa: E402
 
-from app import worker  # noqa: E402
+from app import demo, report, worker  # noqa: E402
 from gate import executor, ledger, store  # noqa: E402
 from gate.payments import razorpayx  # noqa: E402
 
@@ -69,7 +69,7 @@ with st.sidebar:
     if credits:
         total = sum((c["credits"] or 0) for c in credits)
         st.metric("Credits spent (all runs)", f"{total:.2f}")
-        st.dataframe(credits, hide_index=True, use_container_width=True)
+        st.dataframe(credits, hide_index=True, width="stretch")
     else:
         st.caption("No external calls recorded yet.")
     v = ledger.verify()
@@ -81,7 +81,7 @@ with st.sidebar:
             st.success(f"Seeded: {dev_seed.seed() or 'already present'}")
             st.rerun()
 
-tab_run, tab_inbox, tab_ledger, tab_payouts = st.tabs(["Run a request", "Inbox", "Ledger", "Payouts"])
+tab_demo, tab_run, tab_inbox, tab_ledger, tab_payouts = st.tabs(["Demo", "Run a request", "Inbox", "Ledger", "Payouts"])
 
 
 # --------------------------------------------------------------------------------------- inbox
@@ -155,6 +155,8 @@ def decision_card(request_id: str, where: str = "inbox") -> None:
                     f"(`{action['ifsc']}`) · invoice `{action['invoice_key']}` · key `{action['idempotency_key']}`")
     if claims.get("urgency_cues"):
         st.caption("Urgency cues (logged only, never relax a rule): " + ", ".join(claims["urgency_cues"]))
+    st.download_button("⬇ Export decision report (Markdown)", data=report.decision_report_md(request_id),
+                       file_name=f"decision-{request_id}.md", mime="text/markdown", key=f"{where}-export-{request_id}")
     for a in store.approvals_for(request_id):
         st.info(f"{'Approved' if a['approve'] else 'Rejected'} by {a['approver']} at {a['at']}"
                 + (f": {a['note']}" if a["note"] else ""))
@@ -196,13 +198,95 @@ with tab_inbox:
             for d in shown:
                 label = f"{d['verdict']} · {d['request_id']}"
                 sub = f"{d.get('kind') or ''} · {', '.join(d['rule_ids'])} · {STATE_NOTE.get(d['state'], d['state'])}"
-                if st.button(label, key=f"pick-{d['request_id']}", help=sub, use_container_width=True):
+                if st.button(label, key=f"pick-{d['request_id']}", help=sub, width="stretch"):
                     st.session_state["selected"] = d["request_id"]
                 st.markdown(f"<div style='margin:-8px 0 8px 4px;font-size:0.8em'>{badge(d['verdict'])} "
                             f"{html.escape(sub)}</div>", unsafe_allow_html=True)
         with right:
             sel = st.session_state.get("selected") or (pending[0]["request_id"] if pending else decisions[0]["request_id"])
             decision_card(sel)
+
+
+# ---------------------------------------------------------------------------------------- demo
+
+def big_badge(verdict: str, rules: list[str]) -> str:
+    color, label = BADGE.get(verdict, ("#57606a", verdict))
+    return (f"<div style='display:inline-block;background:{color};color:#fff;border-radius:12px;"
+            f"padding:14px 34px;font-size:2.6rem;font-weight:800;letter-spacing:1px'>{html.escape(label)}</div>"
+            f"<span style='font-size:1.3rem;margin-left:16px;color:#57606a'>{html.escape(' · '.join(rules))}</span>")
+
+
+def evidence(request_id: str, only_problems: bool = True) -> None:
+    d = store.get_decision(request_id)
+    if not d:
+        return
+    for r in d.reasons:
+        st.markdown(f"<div style='font-size:1.15rem;margin:4px 0'><b>{html.escape(r.rule_id)}</b> "
+                    f"{html.escape(r.text)}</div>", unsafe_allow_html=True)
+    rows = [c for c in d.checks if not only_problems or c.status.value != "VERIFIED"]
+    for c in rows:
+        srcs = " · ".join(f"{html.escape(s.kind)}: {link(s.ref)}" for s in c.sources)
+        st.markdown(f"<div style='border-left:4px solid {'#cf222e' if c.status.value == 'CONTRADICTED' else '#bf8700'};"
+                    f"padding:6px 10px;margin:6px 0;font-size:1.05rem'>{ICON.get(c.status.value, '')} "
+                    f"<b>{html.escape(c.name)}</b> <code>{c.status.value}</code><br>{html.escape(c.note or '')}"
+                    f"<div style='font-size:0.85rem;color:#57606a'>{srcs}</div></div>", unsafe_allow_html=True)
+
+
+with tab_demo:
+    ds = st.session_state.setdefault("demo", {})
+    top_l, top_r = st.columns([3, 2])
+    top_l.markdown("### Pay each invoice once. Never change a bank account on an email's word.")
+    if top_r.button("⟲ Start fresh demo", type="primary", width="stretch"):
+        st.session_state["demo"] = ds = {"db": demo.fresh_db()}
+        st.rerun()
+    top_r.caption(f"DB `{Path(store.db_path()).name}` · payments **{razorpayx.mode()}**")
+    for i, step in enumerate(demo.STEPS, 1):
+        res = ds.get(step["id"])
+        st.divider()
+        h_l, h_r = st.columns([4, 1])
+        h_l.markdown(f"## {i}. {step['title']}")
+        h_l.caption("🎙 " + step["say"])
+        crash = step["id"] == "crash"
+        if h_r.button("▶ Run" + (" + crash" if crash else ""), key=f"demo-run-{step['id']}", width="stretch"):
+            ds[step["id"]] = demo.run_step(step["id"], crash=crash)
+            st.rerun()
+        if not res:
+            continue
+        rid = res["request_id"]
+        row = store.get_decision_row(rid) or {}
+        st.markdown(big_badge(res["verdict"], res["rule_ids"]), unsafe_allow_html=True)
+        evidence(rid, only_problems=res["verdict"] != "ALLOW")
+        if row.get("state") == store.ESCALATED:
+            if st.button(f"✅ Approve as {approver}", key=f"demo-approve-{step['id']}", type="primary"):
+                res["approval"] = demo.approve(rid, approver, "Called back on the number on file; confirmed.")
+                st.rerun()
+        if res.get("approval"):
+            ap = res["approval"]
+            if ap.get("payout_id"):
+                st.success(f"Approved by {approver} → receipt → executor → payout **{ap['payout_id']}** ({ap.get('payout_status') or ap['status']})")
+            elif ap.get("status") == "no_payment":
+                st.info(f"Approved by {approver}. The new account is on the vendor master; nothing to pay on a bank change.")
+            else:
+                st.warning(f"Approval result: {ap}")
+        if res.get("payout"):
+            st.success(f"Payout **{res['payout'].get('payout_id')}** · {res['payout'].get('status')}")
+        if crash and res.get("crash"):
+            cr = res["crash"]
+            if cr.get("outbox_state") == "unknown":
+                st.error(f"💥 Payer killed (exit {cr['returncode']}). Outbox row **unknown**: the intent was saved; "
+                         "did the money go?")
+                if st.button("♻ Resume", key="demo-resume", type="primary"):
+                    res["resumed"] = demo.resume()
+                    st.rerun()
+        if crash and res.get("resumed") is not None:
+            n = len(demo.payouts_for_case("01_calm"))
+            st.success(f"Resumed with the same key and the same bytes → payouts for this invoice: **{n}**")
+        if step["id"] == "dup":
+            n = len(demo.payouts_for_case("01_calm"))
+            st.markdown(f"<div style='font-size:1.3rem'>Payouts for invoice 2026-27-42: <b>{n}</b></div>",
+                        unsafe_allow_html=True)
+        st.download_button("⬇ Export decision report", data=report.decision_report_md(rid),
+                           file_name=f"decision-{rid}.md", mime="text/markdown", key=f"demo-export-{step['id']}")
 
 
 # -------------------------------------------------------------------------------- run a request
@@ -297,7 +381,7 @@ with tab_ledger:
     evts = ledger.events(limit=300)
     st.dataframe([{"id": e["id"], "at": e["at"], "event": e["event_type"], "hash": e["hash"][:16] + "…",
                    "prev": e["prev_hash"][:16] + "…", "payload": json.dumps(e["payload"], ensure_ascii=False)[:200]}
-                  for e in evts], hide_index=True, use_container_width=True)
+                  for e in evts], hide_index=True, width="stretch")
 
 
 # ------------------------------------------------------------------------------------- payouts
@@ -313,10 +397,10 @@ with tab_payouts:
     if razorpayx.mode() == "test":
         st.caption("RazorpayX test mode: payouts stay 'processing' until moved in the dashboard.")
     st.markdown("#### Payouts")
-    st.dataframe(store.list_payouts(), hide_index=True, use_container_width=True)
+    st.dataframe(store.list_payouts(), hide_index=True, width="stretch")
     st.markdown("#### Outbox")
     st.dataframe([{k: v for k, v in o.items() if k != "body"} for o in store.list_outbox()],
-                 hide_index=True, use_container_width=True)
+                 hide_index=True, width="stretch")
     if razorpayx.mode() == "mock":
         st.markdown("#### Provider view (mock): one row per real payout")
-        st.dataframe(razorpayx.mock_payouts(), hide_index=True, use_container_width=True)
+        st.dataframe(razorpayx.mock_payouts(), hide_index=True, width="stretch")
