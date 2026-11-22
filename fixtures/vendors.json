@@ -1,0 +1,77 @@
+[
+  {
+    "vendor_id": "V-ACME",
+    "legal_name": "Acme Leather Exports Pvt Ltd",
+    "gstin": "09AAACA1234A1ZI",
+    "pan": "AAACA1234A",
+    "state_code": "09",
+    "country": "IN",
+    "domains": [
+      "acmeleather.in"
+    ],
+    "crustdata_company_id": null,
+    "bank_accounts": [
+      {
+        "ifsc": "HDFC0001234",
+        "account_last4": "9012",
+        "account_hash": "fd94fbb31e3c919eeb2ffc6ae7d7a784c5e3a840b2ce62ccb92cd878ba3cee83",
+        "holder_name": "ACME LEATHER EXPORTS PVT LTD",
+        "verified_at": "2026-01-10",
+        "added_at": "2026-01-10"
+      }
+    ],
+    "contacts": [
+      {
+        "name": "Asha Rao",
+        "role": "Accounts Manager",
+        "email": "asha.rao@acmeleather.in",
+        "phone_on_file": "+91-90000-11111",
+        "recorded_at": "2026-01-10"
+      },
+      {
+        "name": "Vikram Sethi",
+        "role": "Chief Financial Officer",
+        "email": "vikram.sethi@acmeleather.in",
+        "phone_on_file": "+91-90000-22222",
+        "recorded_at": "2026-01-10"
+      }
+    ],
+    "per_payment_limit_inr": 500000.0,
+    "per_day_limit_inr": 1000000.0,
+    "created_at": "2026-01-10"
+  },
+  {
+    "vendor_id": "V-KTW",
+    "legal_name": "Kanpur Tannery Works",
+    "gstin": "09ABCPK5678B1ZN",
+    "pan": "ABCPK5678B",
+    "state_code": "09",
+    "country": "IN",
+    "domains": [
+      "kanpurtannery.co.in"
+    ],
+    "crustdata_company_id": null,
+    "bank_accounts": [
+      {
+        "ifsc": "SBIN0001111",
+        "account_last4": "4444",
+        "account_hash": "feb64124ce416e9c1386bf3148b1e7de5064826a01b482b7ff98f5603f1f37fa",
+        "holder_name": "KANPUR TANNERY WORKS",
+        "verified_at": "2026-03-02",
+        "added_at": "2026-03-02"
+      }
+    ],
+    "contacts": [
+      {
+        "name": "Ramesh Kumar",
+        "role": "Proprietor",
+        "email": "ramesh@kanpurtannery.co.in",
+        "phone_on_file": "+91-90000-33333",
+        "recorded_at": "2026-03-02"
+      }
+    ],
+    "per_payment_limit_inr": 200000.0,
+    "per_day_limit_inr": 400000.0,
+    "created_at": "2026-03-02"
+  }
+]

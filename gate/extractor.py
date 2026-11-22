@@ -148,8 +148,8 @@ def extract(request: Request, budget: RunBudget, mock_claims: Optional[dict] = N
 
     model = os.environ.get("GATE_MODEL", DEFAULT_MODEL)
     budget.ensure(0.0)
-    client = anthropic.Anthropic(timeout=60.0, max_retries=2)
     try:
+        client = anthropic.Anthropic(timeout=60.0, max_retries=2)
         resp = client.messages.create(
             model=model,
             max_tokens=4000,
@@ -157,7 +157,7 @@ def extract(request: Request, budget: RunBudget, mock_claims: Optional[dict] = N
             output_config={"effort": "low", "format": {"type": "json_schema", "schema": SCHEMA}},
             messages=[{"role": "user", "content": _user_message(request, visible)}],
         )
-    except anthropic.APIError as e:  # rate limit, timeout, 5xx, bad request: claims stay unknown
+    except anthropic.AnthropicError as e:  # no key, rate limit, timeout, 5xx, bad request: claims stay unknown
         budget.charge("anthropic", "messages", 0.0, note=f"error: {type(e).__name__}")
         c = Claims(extraction_notes=f"extraction failed: {type(e).__name__}")
         c.removed_hidden_content = removed
