@@ -9,7 +9,6 @@ Every write of a decision, approval or payout also appends a ledger event in the
 from __future__ import annotations
 
 import hashlib
-import hmac
 import json
 import os
 import sqlite3
@@ -18,6 +17,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterator, Optional
 
+from gate import keys
 from gate.contracts import (BankAccount, Check, CheckStatus, Claims, Contact, Decision, PaymentAction,
                             Reason, Request, RequestKind, Source, Vendor, Verdict, canonical_json,
                             now_iso, to_dict)
@@ -135,22 +135,14 @@ def init_db(path: Optional[str] = None) -> None:
 
 # ----------------------------------------------------------------------------- account hashing
 
-def _hash_key() -> bytes:
-    key = os.environ.get("ACCOUNT_HASH_KEY")
-    if not key:
-        # Offline tests and dev runs only; the team's real key lives in .env.
-        key = "dev-only-account-hash-key"
-    return key.encode("utf-8")
-
-
 def hash_account(account_number: str) -> str:
-    """HMAC-SHA256(ACCOUNT_HASH_KEY, digits of the account number), hex."""
-    digits = "".join(ch for ch in str(account_number) if ch.isalnum()).upper()
-    return hmac.new(_hash_key(), digits.encode("utf-8"), hashlib.sha256).hexdigest()
+    """HMAC-SHA256(ACCOUNT_HASH_KEY, digits). Delegates to the shared gate.keys.account_hash so the
+    store, the verifiers and the payouts agree byte for byte."""
+    return keys.account_hash(str(account_number))
 
 
 def last4(account_number: str) -> str:
-    digits = "".join(ch for ch in str(account_number) if ch.isalnum())
+    digits = "".join(ch for ch in str(account_number) if ch.isdigit())
     return digits[-4:]
 
 

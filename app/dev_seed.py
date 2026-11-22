@@ -5,13 +5,10 @@ OWNER: Ayush. Made-up companies and people only.
 """
 from __future__ import annotations
 
-import uuid
-
-from gate import executor, store
+from gate import executor, keys, store
 from gate.contracts import (BankAccount, Check, CheckStatus, Claims, Contact, Decision, PaymentAction, Reason,
                             Request, RequestKind, Source, Vendor, Verdict, action_hash)
 
-NS = uuid.UUID("6f1c2a4e-9b1d-4c33-8e0a-5a7d2b9c0f11")
 OLD_ACCT, NEW_ACCT = "50100012345678", "91827364554321"
 
 
@@ -27,10 +24,11 @@ def _vendor() -> Vendor:
 
 
 def _action(invoice: str, amount_paise: int, acct: str = OLD_ACCT) -> PaymentAction:
-    fp = f"29ABCDE1234F1Z5|{invoice}|2026-2027|{amount_paise}"
-    return PaymentAction(vendor_id="V-DEMO-ACME", invoice_key=f"29ABCDE1234F1Z5|{invoice}|2026-2027",
-                         amount_paise=amount_paise, account_hash=store.hash_account(acct), account_last4=acct[-4:],
-                         ifsc="HDFC0000001", idempotency_key=str(uuid.uuid5(NS, fp)))
+    inv_key = keys.invoice_key("29ABCDE1234F1Z5", invoice, "2026-11-20")
+    ah = keys.account_hash(acct)
+    return PaymentAction(vendor_id="V-DEMO-ACME", invoice_key=inv_key, amount_paise=amount_paise, account_hash=ah,
+                         account_last4=acct[-4:], ifsc="HDFC0000001",
+                         idempotency_key=keys.idempotency_key(keys.payment_fingerprint(inv_key, amount_paise, ah)))
 
 
 def _src(kind: str, ref: str, excerpt: str = "", record_id: str | None = None) -> Source:

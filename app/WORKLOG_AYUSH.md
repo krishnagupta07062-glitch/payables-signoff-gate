@@ -72,3 +72,15 @@ Newest entries go at the bottom. Each entry lists what changed, how it was teste
 - Wire the "Run a request" panel to `gate.pipeline.run` once Krishna's pipeline lands (it currently raises NotImplementedError).
 - Add the simulate-crash toggle and on-stage Resume. The crash must run in a subprocess, because `os._exit` would kill Streamlit.
 - RazorpayX test keys: still not set.
+
+---
+
+## 22 Nov 2026, ~14:30 IST: aligned with Krishna's `gate/keys.py`, pipeline verified
+
+- `store.hash_account()` now calls the shared `gate.keys.account_hash` (as ISSUES.md 14:10 asks), so the store, verifiers and payouts agree byte for byte. `last4()` now keeps digits only.
+- `app/dev_seed.py` and `tests/pay/conftest.py` build invoice keys and idempotency keys with `keys.invoice_key` / `keys.idempotency_key(keys.payment_fingerprint(...))`.
+- Krishna's pipeline now uses the real store, ledger and executor; it no longer needs the in-memory fallbacks. `MOCK=1 python scripts/run_demo.py` gives **13/13 as expected**.
+  - The ALLOW cases (01 calm/pushy, 07, 10) each pay once. They are four distinct invoices (42/45/43/44). Re-running the demo replays them ("replayed, not paid twice").
+  - Ledger verify: OK.
+- Full suite: **78 passed** offline.
+- Note for Krishna: the pipeline appends its own `request` / `decision` ledger events, and the store also appends them inside the write transaction, so each request shows up twice in the ledger. That's harmless, but the pipeline's `_ledger` calls can be dropped.
