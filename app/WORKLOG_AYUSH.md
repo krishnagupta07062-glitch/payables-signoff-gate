@@ -102,3 +102,18 @@ Newest entries go at the bottom. Each entry lists what changed, how it was teste
 ### Not done / blocked
 - **RazorpayX test mode:** no `.env` and no `RAZORPAY_KEY_ID/SECRET` on this machine, so the live test-mode run of case 1 is not done. The code path exists (`PAYMENTS_MODE=test`). To finish it: put the test keys and `RAZORPAYX_ACCOUNT_NUMBER` in `.env`, set `PAYMENTS_MODE=test`, run case 1 from the UI, and use Payouts → Refresh status (test payouts stay `processing` until moved in the dashboard).
 - **For the Stage 3 demo:** case 5 (genuine bank change) has no `PaymentAction`. Approving it records the approval, but there's nothing to pay yet ("approved, no payment action"). "Approved by a person, payout follows" needs an invoice to the new account after approval. Ask Krishna whether a fixture should carry that.
+
+---
+
+## 22 Nov 2026, ~14:40 IST: RazorpayX test mode verified live
+
+- Ayush set up a RazorpayX test account: ₹10,00,000 test balance, Yes Bank current account (test). Keys and the account number are in the local `.env` only, never committed.
+- Fix in `gate/payments/razorpayx.py`: narration and contact/beneficiary names are reduced to letters, digits and spaces (`_clean`), because RazorpayX rejects other characters, e.g. the `-` in "Inv 2026-27-42".
+- Live results (DB `runs/razorpayx_live.sqlite`, `PAYMENTS_MODE=test`, `MOCK=1` for extraction/checks):
+  - **Case 01 → ALLOW → real test payout `pout_U39vdsbD0keLmy`**, ₹1,18,000, status `processing` (test payouts stay processing until moved in the dashboard).
+  - Running case 01 again replays `pout_U39vdsbD0keLmy` and doesn't pay twice.
+  - Resending the exact outbox bytes with the same key directly to Razorpay returns the same payout id, so Razorpay's own idempotency confirms it.
+  - The same key with a changed amount is rejected by Razorpay: `400 Different request body sent for the same Idempotency Header`.
+  - **Live crash:** case 07 is paid in a child process that dies right after Razorpay accepted the payout (before we recorded it). `resume()` finds it by `reference_id` (`pout_U39vuKxQCDWYuO`) and adopts it instead of paying again, so there's exactly one payout.
+- Full suite still **79 passed** offline (tests force `PAYMENTS_MODE=mock`).
+- For the demo: start the UI with `PAYMENTS_MODE=test` (from `.env`). Payouts tab → "Refresh status" shows `processing` honestly. To show `processed`, move the payout in the RazorpayX dashboard (Payouts → the payout → mark processed in test mode).

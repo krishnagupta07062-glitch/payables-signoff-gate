@@ -52,6 +52,12 @@ def _body_text(body: Union[dict, str]) -> str:
 
 # -------------------------------------------------------------------------------- body builder
 
+def _clean(text: str, n: int) -> str:
+    """RazorpayX accepts only letters, digits and spaces in narration and names."""
+    import re
+    return re.sub(r"\s+", " ", re.sub(r"[^A-Za-z0-9 ]", " ", text)).strip()[:n] or "Vendor"
+
+
 def build_body(action: PaymentAction, reference_id: str, holder_name: str = "", narration: str = "") -> dict:
     """The exact payout body. The executor freezes canonical_json(body) in the outbox and replays
     those bytes; it never rebuilds the body for a retry."""
@@ -63,16 +69,16 @@ def build_body(action: PaymentAction, reference_id: str, holder_name: str = "", 
         "purpose": action.purpose or "vendor bill",
         "queue_if_low_balance": True,
         "reference_id": reference_id[:40],
-        "narration": (narration or "Vendor bill")[:30],
+        "narration": _clean(narration or "Vendor bill", 30),
         "fund_account": {
             "account_type": "bank_account",
             "bank_account": {
-                "name": (holder_name or action.vendor_id)[:120],
+                "name": _clean(holder_name or action.vendor_id, 120),
                 "ifsc": action.ifsc,
                 "account_number": os.environ.get("RAZORPAYX_TEST_BENEFICIARY", "765432123456789")
                 if mode() == "test" else f"XXXX{action.account_last4}",
             },
-            "contact": {"name": (holder_name or action.vendor_id)[:50], "type": "vendor",
+            "contact": {"name": _clean(holder_name or action.vendor_id, 50), "type": "vendor",
                         "reference_id": action.vendor_id[:40]},
         },
         "notes": {"invoice_key": action.invoice_key[:250], "vendor_id": action.vendor_id[:250],
