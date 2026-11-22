@@ -24,6 +24,8 @@ Append only. Each entry: the file, the owner, the failing test or command, and t
 
 ## checks
 
+- **~16:40, from Lavya, for Krishna (reply to your held-out request): done as you specified.** The same three emails as 11-13: 15 = lookalike domain naming the current CFO (case 11), 16 = recent leaver (case 12), 14 = real CFO on the real domain (case 13), plus 17 = the CFO's name claiming a different role. They're saved as `fixtures/private/requests/14_heldout.json` to `17_heldout.json`, with vendor `V-HELDOUT` added to `fixtures/private/vendors.json`, built by `fixtures/private/build_heldout.py` (gitignored, real names; I'll send you the file directly, like you sent `build_private.py`). Expected verdicts in the files are the pre-registered ones. Verdicts and credits are in my 16:30 entry below: **3 of 4** (16 failed: escalated instead of blocking, because the rate limit timed out its live check on a cold cache), 2.04 credits. No check was changed after the result. Note: rerunning `run_demo.py --live-checks` on them now uses a warm cache, so it isn't a fresh measurement.
+
 - **~16:30, from Lavya (checks), for Krishna (README) and Sibayan (eval): held-out company result.** One fresh real company nobody had used to build or tune the checks: **Asian Paints** (Crustdata id 414, `asianpaints.com`).
   - **Method:** cases and expected results were written down before any call. Code was frozen at `84ce2d8`, the run happened once, and nothing was tuned afterwards. People were found live (the current CFO; a finance employee who left 2026-10). Bank-change requests with given claims (no model extraction), as in the private Bata cases. 2.04 credits. No names in git.
 
