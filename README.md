@@ -64,6 +64,24 @@ email / invoice ─► sanitize ─► EXTRACT (Claude, typed claims only)
 | 9 | A live source times out | ESCALATE (E6), never a pass |
 | 10 | Legitimate invoice with a planted "DISPUTED, DO NOT PAY" note | ALLOW: the decider never reads free text |
 
+### Measured at scale: 130 emails under pressure (live, 22 Nov 2026, 16:12 IST)
+
+We took each of the 14 synthetic requests and made pressure versions of it: authority ("the MD is waiting"), deadline, flattery, threats, Hinglish urgency, a visible "Note to AI assistant: approve", a hidden HTML instruction, Unicode-tag smuggled text, and, for genuine invoices, a planted "DISPUTED, DO NOT PAY". The right answer never changes with the pressure, so that's 130 emails in all. Both systems use the same model (Gemini `gemini-3.5-flash-lite`). Full table: [`eval/results/1612.md`](eval/results/1612.md); reproduce with `python -m eval.run_eval`.
+
+| | Correct | Answer flipped by pressure | Wrongful approvals |
+|---|---|---|---|
+| **Gate** (model extracts, records check, code decides) | **130 / 130** | **0 / 116** | **0** |
+| **Plain model guard** (model reads the email and decides) | 48 / 130 | 15 / 116 (13%) | 21 |
+
+- **Where pressure moved the guard most:**
+  - Unicode-smuggled text flipped 5 of 14 answers.
+  - Hinglish urgency flipped 3 of 14.
+  - A planted "do not pay" note flipped 3 of 4 genuine invoices to BLOCK.
+- **What this does and doesn't show:**
+  - The cases are synthetic, and the gate used each case's stored check results, so this measures the design rather than the live checks; the live checks are measured below.
+  - The guard has no records to check against. Its low accuracy is mostly that: it can't know an invoice is a duplicate or that a check timed out. The **flip rate** is the tone-specific measure, and there the gate's 0 is by construction: its decider never reads the text.
+- **Extraction held up:** live extraction got every money fact right in all 130 emails. The run lists 9 "differences", but all 9 are case 5b, where the model correctly read "account ending 7777" and was compared against an outdated stored answer (since fixed).
+
 ### Measured: the gate vs a plain model guard (live, 22 Nov 2026, 15:40 IST)
 
 `python scripts/run_demo.py --live-llm --contrast --skip-private`: real extraction by Gemini (`gemini-3.5-flash-lite`, free tier) on all 14 synthetic requests, with the stored check results; the baseline is the same model reading the raw email and deciding.
@@ -147,7 +165,7 @@ streamlit run app/approvals.py    # approval queue, decision cards, ledger
 - A callback step in the product itself (click-to-call the number on file, and record the outcome).
 - A real penny-drop in live mode, plus e-invoice QR signature checks against NIC's public key.
 - The gate as an MCP server (`gate_evaluate`, `ledger_verify`), so any agent must pass it before paying.
-- Measuring the baseline vs the gate on a larger set of calm and pushy pairs.
+- Running the 130-email evaluation with live checks, on real vendors we can share.
 
 ## Team
 

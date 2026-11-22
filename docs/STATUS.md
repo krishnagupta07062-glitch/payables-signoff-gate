@@ -49,7 +49,7 @@
 - ✅ `eval/variants.py`: 116 pressure variants of the 14 synthetic cases, with the expected verdicts unchanged.
 - ✅ `eval/run_eval.py`: gate vs plain guard; reports accuracy, flip rate, unsafe ALLOWs and extraction errors; cached.
 - ✅ `mcp_server/server.py`: `gate_evaluate`, which never pays, and `ledger_verify`. It needs `mcp>=2.3`, so run `pip install -r requirements.txt` again.
-- ⏳ The full live eval (130 cases, gate + guard) is running on Ayush's machine; results will go in `eval/results/`.
+- ✅ Live eval done (`eval/results/1612.md`): gate 130/130, 0 flips, 0 unsafe ALLOWs; guard 48/130, 15/116 flips, 21 unsafe ALLOWs. The 9 "extraction errors" are all case 5b against its stale stored claims (fixed 15:42), so the real extraction error rate is 0/130. In the README.
 - **Sibayan's new task:** a fresh-eyes check (see `docs/TEAM_PROMPTS.md`, Sibayan 3).
 
 ## How the fixtures plug in (for Lavya and Ayush)
