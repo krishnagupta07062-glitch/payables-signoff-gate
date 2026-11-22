@@ -45,7 +45,12 @@
 
 ## Evaluation and MCP server (Sibayan, joined ~14:50)
 
-Kickoff prompt: `docs/TEAM_PROMPTS.md` → Sibayan 1. Owns `eval/**`, `mcp_server/**` and `tests/eval/`. Waiting for his first push.
+**Built by Ayush** (pushed from his account), because Sibayan wasn't set up yet:
+- ✅ `eval/variants.py`: 116 pressure variants of the 14 synthetic cases, with the expected verdicts unchanged.
+- ✅ `eval/run_eval.py`: gate vs plain guard; reports accuracy, flip rate, unsafe ALLOWs and extraction errors; cached.
+- ✅ `mcp_server/server.py`: `gate_evaluate`, which never pays, and `ledger_verify`. It needs `mcp>=2.3`, so run `pip install -r requirements.txt` again.
+- ⏳ The full live eval (130 cases, gate + guard) is running on Ayush's machine; results will go in `eval/results/`.
+- **Sibayan's new task:** a fresh-eyes check (see `docs/TEAM_PROMPTS.md`, Sibayan 3).
 
 ## How the fixtures plug in (for Lavya and Ayush)
 

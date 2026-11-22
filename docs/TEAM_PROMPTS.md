@@ -174,6 +174,27 @@ Write mcp_server/README.md with how to add it to Claude Code:
 Commit with [eval].
 ```
 
+### Sibayan 3: Fresh-eyes check (paste now; replaces Sibayan 1 and 2, which Ayush has already built)
+
+```
+You are the team's fresh pair of eyes for the Payables Sign-Off Gate (code freeze 18:00 IST). Judges will clone
+the repo and follow the README, so you do exactly that on a clean clone, and report problems rather than fixing
+other people's files.
+1. Clone the repo into a NEW folder. Follow README.md "Setup and run" step by step on your machine:
+   pip install -r requirements.txt, copy .env.example to .env (add your own free GEMINI_API_KEY,
+   GATE_PROVIDER=gemini), python -m pytest -q, python scripts/run_demo.py, then streamlit run app/approvals.py,
+   and click through the Demo tab following docs/DEMO_SCRIPT.md.
+2. Write down every step that fails, is unclear, or differs from what the README says, with the exact command
+   and error output.
+3. Secret and privacy scan of the whole repo (git grep): API keys (sk-ant, AIza, rzp_, cd_ followed by hex),
+   .env files, real people's names in committed files (fixtures/private/ must not be tracked), and raw
+   Crustdata person responses.
+4. Read README.md as a judge would: is anything unclear, overclaimed or missing? Suggest exact wording.
+5. Append your findings to docs/ISSUES.md under "## eval", one bullet per finding: the file, the owner, the
+   exact command and output, and the suggested fix. Commit with the [eval] prefix (git pull --rebase first).
+   Don't edit any other file.
+```
+
 ---
 
 ## Krishna: core (`gate/contracts.py`, `gate/extractor.py`, `gate/sanitize.py`, `gate/policy.py`, `gate/pipeline.py`, `gate/baseline_guard.py`, `fixtures/`, `tests/core/`, `scripts/run_demo.py`, `README.md`, `docs/`)
