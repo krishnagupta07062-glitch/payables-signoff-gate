@@ -21,6 +21,17 @@ Tests: `tests/verifiers/` has 39 tests. Full suite: 96 passed, offline.
 
 ## Log
 
+### ~15:50: first live Crustdata run (Lavya's key in `.env`)
+- Tested live against Bata India (Crustdata id 573), the vendor in Krishna's live demo. 1.89 credits.
+  - `bata.in` → sender domain VERIFIED (id 573, with request id and record id in the source).
+  - `bata.com` → UNVERIFIABLE: Crustdata says it belongs to Bata Group (id 1135086), the parent. That's correct fail-closed behaviour for a parent/subsidiary domain.
+  - `bata-india.co` → CONTRADICTED (no record ties it to Bata India; free call).
+  - Current CFO, found by `current_role_holder` → `requester_current_role` VERIFIED (record updated 2026-11-11). The same person claiming a different role → CONTRADICTED. The person search filtered by company id 573 works, as Krishna asked.
+- **Fixed: `vendor_active` said Bata's site "did not load".** `bata.in` answers Crustdata's fetcher with HTTP 403 "Access Denied" (bot protection), even with `human_mode`. The check now retries with `human_mode` on 401/403/429. If the site still refuses, it counts as alive only when the Crustdata record is active and fresh (≤ 30 days); otherwise UNVERIFIABLE. Bata → VERIFIED.
+- **Fixed: one call waited 51 s.** Web fetches shared the 5-per-minute bucket with search. `/web/*` now has its own 10-per-minute limiter, as the account allows.
+- `warm_cache.py` live, all 14 cases: run 1 spent 1.00 credit (4 live calls), run 2 spent 0.00 (all 21 cached). Definition of done met.
+- Credits per case, as Krishna asked: synthetic cases cost ~0 (unmatched identify is free). The 1 credit is the web fetch of `acmeleather.in`. A Bata request costs ~0.2 (domain) + ~0.7 (person search) + ~1-2 (vendor active, payments only), so about 1-3 credits cold and 0 warm.
+
 ### ~15:35: lookalike strength, to match Krishna's B2/E10 split
 - Krishna answered the 15:00 request: strong imitation still BLOCKS (B2), weak signals ESCALATE (new E10). The policy reads the start of the check's `reason`.
 - Fixed the check to compare the name and the ending separately. Before, `acmeleaf.co` vs `acmeleaf.in` counted as "2 characters away" (strong). Now it is "same name under a different ending" (weak).

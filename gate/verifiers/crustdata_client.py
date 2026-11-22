@@ -12,7 +12,8 @@ Behaviour:
 - Cache: SQLite under cache/, keyed by sha256(path + canonical body + API version). A cached answer costs 0.
   An "inflight" row is written before each live call, so a crash mid-call is visible. A 4xx answer is
   cached too and replayed as the same error; 5xx, 429 and timeouts are not cached, so the next run retries.
-- Rate limit: 5 calls per rolling minute (shared by every thread in the process).
+- Rate limit: 5 calls per rolling minute for search/enrich/identify, and a separate 10 per minute for /web/*
+  (shared by every thread in the process).
 - 429: retry with backoff (up to 3 tries), then CrustdataRateLimited.
 - Timeout / network error: CrustdataTimeout. Other HTTP errors: CrustdataError.
 - MOCK=1: never touches the network. Answers come from tests/verifiers/fixtures/<cache key>.json;
@@ -122,7 +123,8 @@ class _RateLimiter:
             time.sleep(min(sleep_for, 5.0))
 
 
-_LIMITER = _RateLimiter(RATE_LIMIT_PER_MIN)
+_LIMITER = _RateLimiter(RATE_LIMIT_PER_MIN)          # search / enrich / identify: 5 per minute
+_WEB_LIMITER = _RateLimiter(int(os.environ.get("CRUSTDATA_WEB_RPM", "10")))  # /web/*: its own 10 per minute
 _DB_LOCK = threading.Lock()
 
 # transport(method, url, body, headers, timeout) -> (status, headers_dict, body_bytes). Tests replace it.
@@ -146,6 +148,7 @@ class Crustdata:
         self.use_cache = use_cache
         self.cache_dir = Path(cache_dir or CACHE_DIR)
         self.limiter = limiter or _LIMITER
+        self.web_limiter = limiter or _WEB_LIMITER
         self.last_credits_used = None
         self._db_path = self.cache_dir / "crustdata.sqlite"
 
@@ -216,7 +219,7 @@ class Crustdata:
         payload = json.dumps(body).encode("utf-8") if body is not None and method == "POST" else None
         attempt = 0
         while True:
-            self.limiter.wait()
+            (self.web_limiter if path.startswith("/web/") else self.limiter).wait()
             try:
                 status, hdrs, raw = self.transport(method, BASE_URL + path, payload, headers, TIMEOUT_S)
             except (TimeoutError, OSError) as e:  # socket.timeout and URLError are OSError subclasses

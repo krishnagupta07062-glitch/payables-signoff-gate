@@ -140,19 +140,23 @@ def vendor_active(vendor: Vendor, budget: Optional[RunBudget] = None, cd: Option
                 srcs.append(_src(res, vendor.crustdata_company_id, updated_at, f"status={status}"))
             else:
                 srcs.append(_src(res, vendor.crustdata_company_id, excerpt="no company record"))
+        blocked = False
         if vendor.domains:
             url = f"https://{registrable_domain(vendor.domains[0])}"
-            res = _call(cd, "/web/enrich/live", {"urls": [url]}, budget)
+            p, res = _fetch_page(cd, url, budget, human_mode=False)
             credits += res.credits
-            pages = res.data if isinstance(res.data, list) else (res.data or {}).get("results") or []
-            p = pages[0] if pages else {}
-            http_status = p.get("http_status")
+            if _http(p) in _BOT_BLOCK:  # bot protection (e.g. bata.in answers 403 "Access Denied"): try as a browser
+                p, res = _fetch_page(cd, url, budget, human_mode=True)
+                credits += res.credits
+            http_status = _http(p)
             text = f"{p.get('title') or ''} {(p.get('content') or '')[:20000]}"
             dead = bool(_DEAD_PAGE.search(text))
-            site_live = bool(p.get("success")) and http_status is not None and int(http_status) < 400 and not dead
+            blocked = http_status in _BOT_BLOCK and not dead
+            site_live = bool(p.get("success")) and http_status is not None and http_status < 400 and not dead
             srcs.append(Source(kind="web", ref=url, retrieved_at=res.retrieved_at, request_id=res.request_id,
                                excerpt=f"http {http_status}; title: {(p.get('title') or '')[:80]}"
-                                       + ("; looks expired/parked" if dead else "")))
+                                       + ("; looks expired/parked" if dead else "")
+                                       + ("; server refuses automated fetches" if blocked else "")))
             if dead:
                 return check(name, C, f"{url} looks expired or parked ('{(p.get('title') or '')[:60]}').",
                              {"status": status, "updated_at": updated_at, "site_live": False}, srcs, credits)
@@ -161,15 +165,42 @@ def vendor_active(vendor: Vendor, budget: Optional[RunBudget] = None, cd: Option
     value = {"status": status, "updated_at": updated_at, "site_live": site_live}
     if status == "deleted":
         return check(name, C, f"Crustdata marks {vendor.legal_name} as deleted.", value, srcs, credits)
-    if site_live is False:
-        return unverifiable(name, "The vendor's website did not load (HTTP error or empty); cannot confirm it is alive.",
-                            srcs, value, credits)
     if vendor.crustdata_company_id and status is None:
         return unverifiable(name, "No company status in Crustdata.", srcs, value, credits)
     age = age_days(updated_at)
+    fresh = updated_at is not None and age is not None and age <= STALE_DAYS
+    if blocked:
+        # A server that refuses bots is a live server: expired domains show parked pages or don't resolve.
+        # Only good enough together with a fresh, active company record.
+        if status == "active" and fresh:
+            value["site_live"] = True
+            return check(name, V, f"{vendor.legal_name} is active in Crustdata (record updated {updated_at[:10]}); its "
+                                  f"site answers but refuses automated fetches (HTTP {_http(p)}).", value, srcs, credits)
+        return unverifiable(name, f"The vendor's site refuses automated fetches (HTTP {_http(p)}) and the company "
+                                  "record is not fresh enough to rely on alone.", srcs, value, credits)
+    if site_live is False:
+        return unverifiable(name, "The vendor's website did not load (HTTP error or empty); cannot confirm it is alive.",
+                            srcs, value, credits)
     if updated_at and age is not None and age > STALE_DAYS and site_live is None:
         return unverifiable(name, f"Company record last updated {age} days ago (stale).", srcs, value, credits)
     return check(name, V, f"{vendor.legal_name} is {status or 'listed'} and its site is live.", value, srcs, credits)
+
+
+_BOT_BLOCK = {401, 403, 429}
+
+
+def _http(p: dict) -> Optional[int]:
+    try:
+        return int(p.get("http_status")) if p.get("http_status") is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _fetch_page(cd: Crustdata, url: str, budget, human_mode: bool) -> tuple[dict, CallResult]:
+    body = {"urls": [url], "human_mode": True} if human_mode else {"urls": [url]}
+    res = _call(cd, "/web/enrich/live", body, budget)
+    pages = res.data if isinstance(res.data, list) else (res.data or {}).get("results") or []
+    return (pages[0] if pages else {}), res
 
 
 # ------------------------------------------------------------------------------- requester

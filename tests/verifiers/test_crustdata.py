@@ -164,6 +164,22 @@ def test_vendor_index_active_but_domain_expired(live, vendor, budget):
     assert cdc.vendor_active(vendor, budget).status == C
 
 
+def test_vendor_site_blocks_bots_but_record_fresh(live, vendor, budget):
+    # real case: bata.in answers Crustdata's fetcher with 403 "Access Denied", even in human_mode
+    t, _ = live({"/company/search": (200, {}, _company()),
+                 "/web/enrich/live": (200, {"x-credits-used": "1"}, [{"success": True, "http_status": 403,
+                                                                      "title": "Access Denied", "content": "x"}])})
+    c = cdc.vendor_active(vendor, budget)
+    assert c.status == V and "refuses automated fetches" in c.note
+    assert [b for p, b in t.calls if p == "/web/enrich/live"][1].get("human_mode") is True  # retried as a browser
+
+
+def test_vendor_site_blocks_bots_and_record_stale(live, vendor, budget):
+    live({"/company/search": (200, {}, _company(updated=days_ago(90))),
+          "/web/enrich/live": (200, {}, [{"success": True, "http_status": 403, "title": "Access Denied", "content": ""}])})
+    assert cdc.vendor_active(vendor, budget).status == U
+
+
 def test_vendor_deleted(live, vendor, budget):
     live({"/company/search": (200, {}, _company("deleted")),
           "/web/enrich/live": (200, {}, [{"success": True, "http_status": 200, "title": "ok", "content": ""}])})
