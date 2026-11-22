@@ -33,6 +33,8 @@
 
 ✅ Pushed: Crustdata client (cache, limiter, budget), Crustdata checks, India checks (GSTIN, IFSC, RDAP, lookalike), history checks, `run_all`; 129 tests pass together. Decided her two questions in ISSUES.md (lookalike strong=BLOCK / weak=E10; live demo uses the private Bata cases).
 
+- ✅ Polish pushed (`6b15a99`): related-company domains flagged (parent domain, rebrand sharing a domain), Crustdata 429 and timeout mid-`run_all` give UNVERIFIABLE, tests for each. Cache warmed twice: 0.89 credits cold, 0.00 warm. Next for Lavya: two clean full runs at the 17:15 freeze.
+
 ## Payments and UI (Ayush)
 
 ✅ Pushed 14:30: SQLite store (WAL), hash-chained ledger with UPDATE/DELETE triggers, mock + RazorpayX test-mode payouts, exactly-once executor (signed single-use receipts, outbox, resume), crash tests, Streamlit inbox/ledger/payouts. 78 tests pass with core.
