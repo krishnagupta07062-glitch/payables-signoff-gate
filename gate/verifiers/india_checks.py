@@ -260,31 +260,44 @@ def sender_domain_lookalike(request: Request, vendor: Vendor) -> Check:
     if not vendor_domains:
         return unverifiable(name, "The vendor record has no domains to compare with.", s, {"domain": reg})
 
+    brand = norm_company(vendor.legal_name).split(" ")[0] if vendor.legal_name else ""
+
     def judge(dom: str) -> Optional[dict]:
+        """Compare names (labels) and endings separately, so 'acme.co' vs 'acme.in' is a different ending
+        (weak), not '2 characters away' (strong).
+
+        Strong (policy B2, BLOCK): punycode, look-alike characters, or 1-2 characters from the vendor's name.
+        Weak (policy E10, ESCALATE): same name under a different ending, or contains the vendor's name.
+        The policy reads the START of `reason`, so keep these reason strings exactly.
+        """
         if dom in vendor_domains or any(dom == registrable_domain(v) for v in vendor_domains):
             return None
-        sk = skeleton(dom)
+        raw_d = _label(dom)
         best = None
         for v in vendor_domains:
             vr = registrable_domain(v)
-            dist = lev(sk, skeleton(vr))
-            lab_d, lab_v = _label(sk), _label(skeleton(vr))
-            reason = None
-            if "xn--" in dom:
-                reason = "punycode (internationalised) domain"
-            if sk == skeleton(vr):
-                reason = "same as the vendor domain after removing look-alike characters"
-            elif dist <= 2:
-                reason = f"{dist} character(s) from the vendor domain"
-            elif lab_d == lab_v:
-                reason = "same name under a different ending"
-            elif len(lab_v) >= 4 and lab_v in lab_d:
-                reason = "contains the vendor's name"
-            brand = norm_company(vendor.legal_name).split(" ")[0] if vendor.legal_name else ""
-            if not reason and len(brand) >= 4 and brand in lab_d.replace("-", ""):
-                reason = f"contains the vendor's name '{brand}'"
-            if reason and (best is None or dist < best["distance"]):
-                best = {"domain": dom, "closest": vr, "distance": dist, "reason": reason}
+            raw_v = _label(vr)
+            sk_d, sk_v = skeleton(raw_d), skeleton(raw_v)
+            dist = lev(sk_d, sk_v)
+            reason, strength = None, None
+            if "xn--" in dom and (dist <= 2 or (len(sk_v) >= 4 and sk_v in sk_d)):
+                reason, strength = "punycode (internationalised) domain", "strong"
+            elif raw_d != raw_v and sk_d == sk_v:
+                reason, strength = "same as the vendor domain after removing look-alike characters", "strong"
+            elif 1 <= dist <= 2 and len(sk_v) >= 4:
+                reason, strength = f"{dist} character(s) from the vendor domain", "strong"
+            elif raw_d == raw_v:
+                reason, strength = "same name under a different ending", "weak"
+            elif len(sk_v) >= 4 and sk_v in sk_d.replace("-", ""):
+                reason, strength = "contains the vendor's name", "weak"
+            elif len(brand) >= 4 and brand in sk_d.replace("-", ""):
+                reason, strength = f"contains the vendor's name '{brand}'", "weak"
+            if not reason:
+                continue
+            cand = {"domain": dom, "closest": vr, "distance": dist, "reason": reason, "strength": strength}
+            rank = (strength != "strong", dist)
+            if best is None or rank < (best["strength"] != "strong", best["distance"]):
+                best = cand
         return best
 
     for dom in [reg] + extra:

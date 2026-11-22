@@ -21,6 +21,14 @@ Tests: `tests/verifiers/` has 39 tests. Full suite: 96 passed, offline.
 
 ## Log
 
+### ~15:35: lookalike strength, to match Krishna's B2/E10 split
+- Krishna answered the 15:00 request: strong imitation still BLOCKS (B2), weak signals ESCALATE (new E10). The policy reads the start of the check's `reason`.
+- Fixed the check to compare the name and the ending separately. Before, `acmeleaf.co` vs `acmeleaf.in` counted as "2 characters away" (strong). Now it is "same name under a different ending" (weak).
+  - Strong: punycode, look-alike characters, 1-2 characters from the vendor's name.
+  - Weak: same name under a different ending, contains the vendor's name.
+- Added `value["strength"]` ("strong"/"weak"). Case 3's `acmeleathers.in` is still strong, so it still blocks.
+- Krishna's other answers: synthetic cases stay the offline spec, and case 1 escalating live is correct fail-closed behaviour. The live demo uses private cases 11-13 against Bata India (Crustdata id 573), and he'll send the fixture file directly. `warm_cache.py` already reads `fixtures/private/vendors.json` and `fixtures/private/requests/` through his loaders.
+
 ### ~15:20: `scripts/warm_cache.py`
 - Runs the same checks as `run_all` (`verifiers.plan`), but one at a time with no deadline, so a cold cache fills completely under the 5-per-minute limit.
 - Prints check, status, the spec's status, credits, seconds and source for every case, then a summary: credits, live vs cached Crustdata calls, slowest checks, and every check that differs from the spec.

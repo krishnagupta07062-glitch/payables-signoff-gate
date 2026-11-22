@@ -74,9 +74,15 @@ def test_domain_age_offline_is_unverifiable(vendor):
 def test_lookalike(vendor):
     assert ic.sender_domain_lookalike(_req("x@acmeleaf.in"), vendor).status == V
     assert ic.sender_domain_lookalike(_req("x@mail.acmeleaf.in"), vendor).status == V
-    for bad in ("acrneleaf.in", "acmeleaf.co", "acme1eaf.in", "acmeleaf-payments.com", "acmeleaff.in"):
+    # strong imitation -> policy B2 (BLOCK)
+    for bad in ("acrneleaf.in", "acme1eaf.in", "acmeleaff.in", "acmeleafs.co.in"):
         c = ic.sender_domain_lookalike(_req(f"x@{bad}"), vendor)
-        assert c.status == C, bad
+        assert c.status == C and c.value["strength"] == "strong", bad
+    # weak signals -> policy E10 (ESCALATE); the policy matches the start of these reason strings
+    c = ic.sender_domain_lookalike(_req("x@acmeleaf.co"), vendor)
+    assert c.status == C and c.value["reason"].startswith("same name under a different ending")
+    c = ic.sender_domain_lookalike(_req("x@acmeleaf-payments.com"), vendor)
+    assert c.status == C and c.value["reason"].startswith("contains the vendor's name")
     assert ic.sender_domain_lookalike(_req("x@gmail.com"), vendor).status == V  # different, not a lookalike
     r = _req("x@acmeleaf.in")
     r.reply_to = "pay@acmeleaf-in.com"
