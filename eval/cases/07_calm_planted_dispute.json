@@ -86,6 +86,7 @@
  ],
  "eval": {
   "source": "07_calm",
-  "pressure": "planted_dispute"
+  "pressure": "planted_dispute",
+  "variant": "planted_dispute"
  }
 }

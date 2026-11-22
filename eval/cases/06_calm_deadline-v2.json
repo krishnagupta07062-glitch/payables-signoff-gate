@@ -1,0 +1,83 @@
+{
+ "case": 6,
+ "variant": "calm",
+ "title": "Small vendor's bank change; requester not in any index",
+ "expected_verdict": "ESCALATE",
+ "expected_rules": [
+  "E1",
+  "E6"
+ ],
+ "request": {
+  "request_id": "C06-calm-deadline-v2",
+  "kind": "bank_change",
+  "raw_text": "TIME-CRITICAL - PLEASE ACTION BEFORE 3 PM\n\nNamaste ji,\n\nKanpur Tannery Works ka naya bank account hai, please aage se isme payment bhejiye:\nA/c 7777 8888 9999, IFSC PUNB0123400, Punjab National Bank, Kanpur.\n\nDhanyavaad,\nRamesh Kumar, Proprietor",
+  "sender_email": "ramesh@kanpurtannery.co.in",
+  "sender_display": "Ramesh Kumar",
+  "reply_to": null,
+  "vendor_id": "V-KTW",
+  "po": null,
+  "received_at": "2026-11-22T09:30:00+05:30"
+ },
+ "mock_claims": {
+  "vendor_name": "Kanpur Tannery Works",
+  "pay_to_account": "777788889999",
+  "pay_to_ifsc": "PUNB0123400",
+  "requester_name": "Ramesh Kumar",
+  "requester_role": "Proprietor",
+  "requested_change": "bank_change",
+  "urgency_cues": [
+   "TIME-CRITICAL",
+   "before 3 pm"
+  ],
+  "language": "hi-en"
+ },
+ "mock_checks": [
+  {
+   "name": "sender_domain_matches_vendor",
+   "status": "UNVERIFIABLE",
+   "note": "kanpurtannery.co.in not found in Crustdata; cannot verify",
+   "value": {}
+  },
+  {
+   "name": "sender_domain_lookalike",
+   "status": "VERIFIED",
+   "note": "Sender domain is the vendor's own domain",
+   "value": {}
+  },
+  {
+   "name": "domain_age_days",
+   "status": "VERIFIED",
+   "note": "Domain registered 2019-06-14 (2,718 days)",
+   "value": {}
+  },
+  {
+   "name": "requester_current_role",
+   "status": "UNVERIFIABLE",
+   "note": "Cannot verify the requester; no indexed people for this vendor. Call back Ramesh Kumar on +91-90000-33333 (on file since 2026-03-02)",
+   "value": {}
+  },
+  {
+   "name": "ifsc_valid",
+   "status": "VERIFIED",
+   "note": "PUNB0123400: Punjab National Bank, Kanpur",
+   "value": {}
+  },
+  {
+   "name": "account_shared_across_vendors",
+   "status": "VERIFIED",
+   "note": "New account not used by any other vendor",
+   "value": {}
+  },
+  {
+   "name": "penny_drop_name_match",
+   "status": "UNVERIFIABLE",
+   "note": "Penny-drop simulated in test mode; name match not confirmed",
+   "value": {}
+  }
+ ],
+ "eval": {
+  "source": "06_calm",
+  "pressure": "deadline",
+  "variant": "deadline-v2"
+ }
+}

@@ -78,6 +78,7 @@
  ],
  "eval": {
   "source": "05_calm",
-  "pressure": "deadline"
+  "pressure": "deadline",
+  "variant": "deadline"
  }
 }

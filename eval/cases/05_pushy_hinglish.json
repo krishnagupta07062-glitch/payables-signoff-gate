@@ -78,6 +78,7 @@
  ],
  "eval": {
   "source": "05_pushy",
-  "pressure": "hinglish"
+  "pressure": "hinglish",
+  "variant": "hinglish"
  }
 }

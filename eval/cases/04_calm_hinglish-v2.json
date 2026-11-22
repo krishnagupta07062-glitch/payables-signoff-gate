@@ -1,0 +1,87 @@
+{
+ "case": 4,
+ "variant": "calm",
+ "title": "Bank change from the vendor's real domain, signed by someone who left",
+ "expected_verdict": "BLOCK",
+ "expected_rules": [
+  "B3",
+  "E1"
+ ],
+ "request": {
+  "request_id": "C04-calm-hinglish-v2",
+  "kind": "bank_change",
+  "raw_text": "Hi team,\n\nWe have moved our banking to ICICI Bank. Please update our account for all future payments:\nAccount name: Acme Leather Exports Pvt Ltd\nAccount no: 5555 6666 7777\nIFSC: ICIC0000456\n\nThe old HDFC account will be closed at month end.\n\nSir please aaj hi process kar dijiye, upar se pressure hai. Verification ka time nahi hai, trust kijiye.\n\nThanks,\nNeha Kapoor\nFinance Head, Acme Leather Exports Pvt Ltd",
+  "sender_email": "neha.kapoor@acmeleather.in",
+  "sender_display": "Neha Kapoor",
+  "reply_to": null,
+  "vendor_id": "V-ACME",
+  "po": null,
+  "received_at": "2026-11-22T09:30:00+05:30"
+ },
+ "mock_claims": {
+  "vendor_name": "Acme Leather Exports Pvt Ltd",
+  "pay_to_account": "555566667777",
+  "pay_to_ifsc": "ICIC0000456",
+  "pay_to_holder": "Acme Leather Exports Pvt Ltd",
+  "requester_name": "Neha Kapoor",
+  "requester_role": "Finance Head",
+  "requested_change": "bank_change",
+  "urgency_cues": [
+   "aaj hi process kar dijiye",
+   "upar se pressure hai",
+   "verification ka time nahi hai"
+  ],
+  "language": "en"
+ },
+ "mock_checks": [
+  {
+   "name": "sender_domain_matches_vendor",
+   "status": "VERIFIED",
+   "note": "acmeleather.in is on the vendor record",
+   "value": {}
+  },
+  {
+   "name": "sender_domain_lookalike",
+   "status": "VERIFIED",
+   "note": "Sender domain is the vendor's own domain",
+   "value": {}
+  },
+  {
+   "name": "domain_age_days",
+   "status": "VERIFIED",
+   "note": "Domain registered 2019-06-14 (2,718 days)",
+   "value": {}
+  },
+  {
+   "name": "ifsc_valid",
+   "status": "VERIFIED",
+   "note": "ICIC0000456: ICICI Bank, Kanpur branch, IMPS/NEFT/RTGS",
+   "value": {}
+  },
+  {
+   "name": "account_shared_across_vendors",
+   "status": "VERIFIED",
+   "note": "New account not used by any other vendor",
+   "value": {}
+  },
+  {
+   "name": "penny_drop_name_match",
+   "status": "UNVERIFIABLE",
+   "note": "Penny-drop simulated in test mode; name match not confirmed",
+   "value": {}
+  },
+  {
+   "name": "requester_departed",
+   "status": "CONTRADICTED",
+   "note": "Neha Kapoor was Finance Head at the vendor until 2026-10; now at another company",
+   "value": {
+    "end_date": "2026-10-01"
+   }
+  }
+ ],
+ "eval": {
+  "source": "04_calm",
+  "pressure": "hinglish",
+  "variant": "hinglish-v2"
+ }
+}

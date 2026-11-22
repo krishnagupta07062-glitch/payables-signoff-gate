@@ -81,6 +81,7 @@
  ],
  "eval": {
   "source": "03_calm",
-  "pressure": "visible_ai_note"
+  "pressure": "visible_ai_note",
+  "variant": "visible_ai_note"
  }
 }

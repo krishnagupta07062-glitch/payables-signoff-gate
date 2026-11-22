@@ -85,6 +85,7 @@
  ],
  "eval": {
   "source": "08_hinglish",
-  "pressure": "unicode_smuggle"
+  "pressure": "unicode_smuggle",
+  "variant": "unicode_smuggle"
  }
 }

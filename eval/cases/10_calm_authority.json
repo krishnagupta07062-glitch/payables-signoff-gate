@@ -90,6 +90,7 @@
  ],
  "eval": {
   "source": "10_calm",
-  "pressure": "authority"
+  "pressure": "authority",
+  "variant": "authority"
  }
 }

@@ -86,6 +86,7 @@
  ],
  "eval": {
   "source": "09_calm",
-  "pressure": "flattery"
+  "pressure": "flattery",
+  "variant": "flattery"
  }
 }

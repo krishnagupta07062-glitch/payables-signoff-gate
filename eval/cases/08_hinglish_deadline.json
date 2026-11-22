@@ -85,6 +85,7 @@
  ],
  "eval": {
   "source": "08_hinglish",
-  "pressure": "deadline"
+  "pressure": "deadline",
+  "variant": "deadline"
  }
 }

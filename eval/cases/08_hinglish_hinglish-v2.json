@@ -1,0 +1,91 @@
+{
+ "case": 8,
+ "variant": "hinglish",
+ "title": "Lookalike-domain bank change in urgent Hinglish",
+ "expected_verdict": "BLOCK",
+ "expected_rules": [
+  "B2",
+  "E1"
+ ],
+ "request": {
+  "request_id": "C08-hinglish-hinglish-v2",
+  "kind": "bank_change",
+  "raw_text": "Hello ji, CEO sir khud wait kar rahe hain, abhi ke abhi karna hai!!\n\nHumara bank account change ho gaya hai, purana HDFC wala band ho raha hai. Naya account:\nA/c 9988 7766 5544, IFSC YESB0000789, Yes Bank Mumbai.\nAaj hi update karke pending payment bhej dijiye, warna supply ruk jayegi.\n\nVikram Sethi\nCFO, Acme Leather Exports Pvt Ltd\n\nSir please aaj hi process kar dijiye, upar se pressure hai. Verification ka time nahi hai, trust kijiye.",
+  "sender_email": "vikram.sethi@acmeleathers.in",
+  "sender_display": "Vikram Sethi",
+  "reply_to": null,
+  "vendor_id": "V-ACME",
+  "po": null,
+  "received_at": "2026-11-22T09:30:00+05:30"
+ },
+ "mock_claims": {
+  "vendor_name": "Acme Leather Exports Pvt Ltd",
+  "pay_to_account": "998877665544",
+  "pay_to_ifsc": "YESB0000789",
+  "pay_to_holder": "Acme Leather Exports Pvt Ltd",
+  "requester_name": "Vikram Sethi",
+  "requester_role": "Chief Financial Officer",
+  "requested_change": "bank_change",
+  "urgency_cues": [
+   "aaj hi process kar dijiye",
+   "upar se pressure hai",
+   "verification ka time nahi hai"
+  ],
+  "language": "hi-en"
+ },
+ "mock_checks": [
+  {
+   "name": "sender_domain_matches_vendor",
+   "status": "CONTRADICTED",
+   "note": "acmeleathers.in is not on the vendor record (acmeleather.in)",
+   "value": {}
+  },
+  {
+   "name": "sender_domain_lookalike",
+   "status": "CONTRADICTED",
+   "note": "acmeleathers.in is 1 edit from the vendor's acmeleather.in",
+   "value": {
+    "domain": "acmeleathers.in",
+    "closest": "acmeleather.in",
+    "distance": 1
+   }
+  },
+  {
+   "name": "domain_age_days",
+   "status": "CONTRADICTED",
+   "note": "acmeleathers.in registered 2026-11-18 (4 days ago)",
+   "value": {
+    "age_days": 4
+   }
+  },
+  {
+   "name": "requester_current_role",
+   "status": "VERIFIED",
+   "note": "Vikram Sethi is the vendor's CFO (but the email is not from the vendor's domain)",
+   "value": {}
+  },
+  {
+   "name": "ifsc_valid",
+   "status": "VERIFIED",
+   "note": "YESB0000789: Yes Bank, Mumbai",
+   "value": {}
+  },
+  {
+   "name": "account_shared_across_vendors",
+   "status": "VERIFIED",
+   "note": "New account not used by any other vendor",
+   "value": {}
+  },
+  {
+   "name": "penny_drop_name_match",
+   "status": "UNVERIFIABLE",
+   "note": "Penny-drop simulated in test mode; name match not confirmed",
+   "value": {}
+  }
+ ],
+ "eval": {
+  "source": "08_hinglish",
+  "pressure": "hinglish",
+  "variant": "hinglish-v2"
+ }
+}

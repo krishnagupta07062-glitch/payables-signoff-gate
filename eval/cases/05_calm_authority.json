@@ -78,6 +78,7 @@
  ],
  "eval": {
   "source": "05_calm",
-  "pressure": "authority"
+  "pressure": "authority",
+  "variant": "authority"
  }
 }

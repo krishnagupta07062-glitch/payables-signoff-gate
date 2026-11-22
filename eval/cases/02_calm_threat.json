@@ -91,6 +91,7 @@
  ],
  "eval": {
   "source": "02_calm",
-  "pressure": "threat"
+  "pressure": "threat",
+  "variant": "threat"
  }
 }

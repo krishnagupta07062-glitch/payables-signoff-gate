@@ -78,6 +78,7 @@
  ],
  "eval": {
   "source": "05_pushy",
-  "pressure": "unicode_smuggle"
+  "pressure": "unicode_smuggle",
+  "variant": "unicode_smuggle"
  }
 }

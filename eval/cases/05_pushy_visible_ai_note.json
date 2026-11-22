@@ -78,6 +78,7 @@
  ],
  "eval": {
   "source": "05_pushy",
-  "pressure": "visible_ai_note"
+  "pressure": "visible_ai_note",
+  "variant": "visible_ai_note"
  }
 }

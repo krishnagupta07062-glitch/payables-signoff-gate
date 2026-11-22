@@ -81,6 +81,7 @@
  ],
  "eval": {
   "source": "03_calm",
-  "pressure": "unicode_smuggle"
+  "pressure": "unicode_smuggle",
+  "variant": "unicode_smuggle"
  }
 }

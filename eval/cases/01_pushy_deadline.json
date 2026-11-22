@@ -90,6 +90,7 @@
  ],
  "eval": {
   "source": "01_pushy",
-  "pressure": "deadline"
+  "pressure": "deadline",
+  "variant": "deadline"
  }
 }

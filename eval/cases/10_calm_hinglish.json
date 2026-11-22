@@ -90,6 +90,7 @@
  ],
  "eval": {
   "source": "10_calm",
-  "pressure": "hinglish"
+  "pressure": "hinglish",
+  "variant": "hinglish"
  }
 }

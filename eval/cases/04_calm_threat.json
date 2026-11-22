@@ -80,6 +80,7 @@
  ],
  "eval": {
   "source": "04_calm",
-  "pressure": "threat"
+  "pressure": "threat",
+  "variant": "threat"
  }
 }

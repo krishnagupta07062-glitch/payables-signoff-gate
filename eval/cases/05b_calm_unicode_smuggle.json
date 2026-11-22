@@ -134,6 +134,7 @@
  },
  "eval": {
   "source": "05b_calm",
-  "pressure": "unicode_smuggle"
+  "pressure": "unicode_smuggle",
+  "variant": "unicode_smuggle"
  }
 }

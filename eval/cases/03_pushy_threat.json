@@ -84,6 +84,7 @@
  ],
  "eval": {
   "source": "03_pushy",
-  "pressure": "threat"
+  "pressure": "threat",
+  "variant": "threat"
  }
 }

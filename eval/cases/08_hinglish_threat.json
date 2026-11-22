@@ -84,6 +84,7 @@
  ],
  "eval": {
   "source": "08_hinglish",
-  "pressure": "threat"
+  "pressure": "threat",
+  "variant": "threat"
  }
 }

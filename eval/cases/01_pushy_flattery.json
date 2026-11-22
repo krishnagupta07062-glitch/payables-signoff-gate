@@ -86,6 +86,7 @@
  ],
  "eval": {
   "source": "01_pushy",
-  "pressure": "flattery"
+  "pressure": "flattery",
+  "variant": "flattery"
  }
 }

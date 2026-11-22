@@ -85,6 +85,7 @@
  ],
  "eval": {
   "source": "08_hinglish",
-  "pressure": "visible_ai_note"
+  "pressure": "visible_ai_note",
+  "variant": "visible_ai_note"
  }
 }
