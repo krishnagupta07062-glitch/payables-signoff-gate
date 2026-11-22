@@ -1,7 +1,7 @@
 # Implementation plan: Payables Sign-Off Gate
 
 *ContextCon 05, BITS Pilani, 22 Nov 2026. Team: Krishna (core), Lavya (checks), Ayush (payments + UI). Code freeze at 18:00 IST.*
-*Research: `docs/research/00_SYNTHESIS.md`. Copy-paste prompts for each person: `docs/TEAM_PROMPTS.md`. Shared rules: `CLAUDE.md`.*
+*Live progress: `docs/STATUS.md`. Research: `docs/research/00_SYNTHESIS.md`. Copy-paste prompts for each person: `docs/TEAM_PROMPTS.md`. Shared rules: `CLAUDE.md`.*
 
 ## 1. What we are building
 
@@ -75,7 +75,7 @@ Rules are checked in order; the first BLOCK wins, then any ESCALATE, otherwise A
 | B3 | `requester_departed` CONTRADICTED (the person appears only in past roles at the vendor) | BLOCK |
 | B4 | `account_shared_across_vendors` CONTRADICTED | BLOCK |
 | B5 | `gstin_checksum` or `gstin_matches_vendor` CONTRADICTED | BLOCK |
-| B6 | A payment to an account not on the vendor master (`account_on_vendor_master` CONTRADICTED), with no approved bank change | BLOCK |
+| B6 | A payment to an account not on the vendor master (`account_on_vendor_master` CONTRADICTED, or the invoice names another account), or `ifsc_valid` / `penny_drop_name_match` CONTRADICTED | BLOCK |
 | E1 | `requested_change == bank_change` | ESCALATE, and hold the vendor's payments |
 | E2 | First payment to an account added less than 3 business days ago | ESCALATE |
 | E3 | `penny_drop_name_match` UNVERIFIABLE (score 60–89, failed, or not run) on a new account | ESCALATE |
@@ -84,6 +84,7 @@ Rules are checked in order; the first BLOCK wins, then any ESCALATE, otherwise A
 | E6 | Any check a rule needs is UNVERIFIABLE (name the missing source in the reason) | ESCALATE |
 | E7 | Pay-to country differs from the vendor's country | ESCALATE |
 | E8 | Amount above the vendor's per-payment or per-day limit | ESCALATE |
+| E9 | Any other CONTRADICTED check not used by a BLOCK rule (e.g. `vendor_news`, `sender_domain_matches_vendor`) | ESCALATE |
 | A1 | None of the above | ALLOW |
 
 ## 5. Checks (Lavya implements in `gate/verifiers/`)
