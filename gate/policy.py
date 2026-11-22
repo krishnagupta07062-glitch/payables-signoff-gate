@@ -6,6 +6,7 @@ a Reason naming its rule id and the checks behind it, so a decision can be repla
 """
 from __future__ import annotations
 
+import re
 from datetime import date, datetime, timedelta
 from typing import Optional
 
@@ -72,6 +73,12 @@ def _pay_to_account(claims: Claims, vendor: Vendor) -> tuple[Optional[BankAccoun
     Money only ever goes to a vendor-master account. If the text names an account, it must match one.
     """
     verified = [a for a in vendor.bank_accounts if a.verified_at]
+    digits = re.sub(r"\D", "", claims.pay_to_account or "")
+    if claims.pay_to_account and len(digits) <= 4:
+        # "account ending 7777": only a reference to the master; it must match exactly one account there
+        hits = [a for a in vendor.bank_accounts if digits and a.account_last4 == digits.zfill(4)[-4:]
+                and (not claims.pay_to_ifsc or a.ifsc.upper() == claims.pay_to_ifsc.upper())]
+        return (hits[0], False) if len(hits) == 1 else (None, True)
     if claims.pay_to_account:
         h = account_hash(claims.pay_to_account)
         for a in vendor.bank_accounts:
@@ -110,7 +117,10 @@ WEAK_LOOKALIKE_REASONS = ("same name under a different ending", "contains the ve
 def _strong_lookalike(check) -> bool:
     """Punycode, look-alike characters or 1-2 edits from the vendor domain: BLOCK. Weak signals escalate.
     A lookalike check without a recognisable reason counts as strong (fail closed)."""
-    reason = str((check.value or {}).get("reason") or "")
+    value = check.value or {}
+    if value.get("strength") in ("strong", "weak"):  # set by the check itself
+        return value["strength"] == "strong"
+    reason = str(value.get("reason") or "")
     return not any(reason.startswith(w) for w in WEAK_LOOKALIKE_REASONS)
 
 

@@ -9,7 +9,7 @@
   "request": {
     "request_id": "C05b-calm",
     "kind": "invoice",
-    "raw_text": "Dear Accounts Team,\n\nPlease find below our tax invoice for the October consignment of finished leather (PO-7781).\n\nTax Invoice No: INV/2026-27/0050\nDate: 20-11-2026\nSupplier: Acme Leather Exports Pvt Ltd, GSTIN 09AAACA1234A1ZI\nAmount payable: Rs 1,18,000.00 (incl. GST)\nPlease remit to our new ICICI account ending 7777, as updated with you today.\n\nRegards,\nAsha Rao\nAccounts Manager, Acme Leather Exports Pvt Ltd",
+    "raw_text": "Dear Accounts Team,\n\nPlease find below our tax invoice for the October consignment of finished leather (PO-7781).\n\nTax Invoice No: INV/2026-27/0050\nDate: 20-11-2026\nSupplier: Acme Leather Exports Pvt Ltd, GSTIN 09AAACA1234A1ZI\nAmount payable: Rs 1,18,000.00 (incl. GST)\nPlease remit to our ICICI Bank account ending 7777, which is already on your vendor master.\n\nRegards,\nAsha Rao\nAccounts Manager, Acme Leather Exports Pvt Ltd",
     "sender_email": "asha.rao@acmeleather.in",
     "sender_display": "Asha Rao",
     "reply_to": null,

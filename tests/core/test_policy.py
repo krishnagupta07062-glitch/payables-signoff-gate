@@ -180,3 +180,20 @@ def test_lookalike_strength(reason, rule, verdict):
     checks.append(Check("sender_domain_lookalike", CheckStatus.CONTRADICTED, {"reason": reason}, note="imitates"))
     d = run(inv_request(), invoice_claims(), checks)
     assert d.verdict == verdict and rule in d.rule_ids
+
+
+def test_lookalike_strength_field_wins():
+    checks = clean_invoice_checks()
+    checks.append(Check("sender_domain_lookalike", CheckStatus.CONTRADICTED, {"reason": "odd", "strength": "weak"}))
+    assert run(inv_request(), invoice_claims(), checks).verdict == Verdict.ESCALATE
+
+
+@pytest.mark.parametrize("ref,ok", [("7777", True), ("XXXX7777", True), ("1234", False)])
+def test_account_referenced_by_last4(ref, ok):
+    import json
+    from gate.pipeline import vendor_from_dict
+    case = json.load(open("fixtures/requests/05b_calm.json", encoding="utf-8"))
+    v = vendor_from_dict(case["vendor"])
+    from gate import policy
+    acct, other = policy._pay_to_account(Claims(pay_to_account=ref), v)
+    assert (acct is not None and acct.account_last4 == "7777" and not other) if ok else (acct is None and other)

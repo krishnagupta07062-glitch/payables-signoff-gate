@@ -221,7 +221,7 @@ ACME_AFTER_CHANGE["bank_accounts"].append(
      "holder_name": "ACME LEATHER EXPORTS PVT LTD", "verified_at": "2026-11-22", "added_at": "2026-11-22"})
 t5b = (INVOICE_TEXT.format(gstin=ACME_GSTIN).replace("0042", "0050")
        .replace("Please remit to our account on file with you.",
-                "Please remit to our new ICICI account ending 7777, as updated with you today."))
+                "Please remit to our ICICI Bank account ending 7777, which is already on your vendor master."))
 case("05b", "calm", "First invoice to the newly approved account (after case 5)", "ESCALATE", ["E2"],
      req("C05b-calm", "invoice", t5b, "asha.rao@acmeleather.in", "Asha Rao", po=PO),
      inv("INV/2026-27/0050", pay_to_account=ACME_NEW_ACCT, pay_to_ifsc="ICIC0000456"),
