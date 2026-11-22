@@ -7,3 +7,5 @@ venv/
 *.db
 cache/
 runs/
+fixtures/private/
+.pytest_cache/

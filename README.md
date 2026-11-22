@@ -25,14 +25,36 @@ The costliest payables fraud is a polite email asking to change a vendor's bank 
 
 The extract-then-code gate design comes from the team's earlier research project, *Gatekeeper*: measuring tone-driven errors in small policy guards. No code from it is copied here. Everything in this repo was written during the event, from 10:15 AM on 22 Nov 2026.
 
+## Team
+
+| Who | Owns |
+|---|---|
+| Krishna | Core: extractor, policy, pipeline, demo cases |
+| Lavya | Checks: Crustdata and Indian verification (GSTIN, IFSC, domain age, duplicates) |
+| Ayush | Payments and UI: store, ledger, exactly-once RazorpayX payouts, Streamlit approvals |
+
+- Plan: [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md)
+- Prompts for each person: [`docs/TEAM_PROMPTS.md`](docs/TEAM_PROMPTS.md)
+- Shared rules: [`CLAUDE.md`](CLAUDE.md)
+- Research: [`docs/research/00_SYNTHESIS.md`](docs/research/00_SYNTHESIS.md)
+
 ## Setup
 
 ```bash
-cp .env.example .env   # add your Crustdata API key
-python crustdata.py    # prints your credit balance and enabled endpoints
+pip install -r requirements.txt
+cp .env.example .env    # add your Crustdata and Anthropic keys
+python crustdata.py     # prints your credit balance and enabled endpoints
+python -m pytest -q
 ```
 
 ## Repo layout
 
-- `crustdata.py`: a minimal Crustdata API client (API version 2025-11-01).
+- `gate/contracts.py`: shared types (frozen).
+- `gate/runbudget.py`: credit and time ceiling, and a log of every call.
+- `gate/extractor.py`, `gate/sanitize.py`, `gate/policy.py`, `gate/pipeline.py`: core.
+- `gate/verifiers/`: checks (Crustdata, Indian registries, history).
+- `gate/store.py`, `gate/ledger.py`, `gate/executor.py`, `gate/payments/`: store, ledger and payments.
+- `app/approvals.py`: Streamlit approval queue.
+- `fixtures/`: demo vendors and requests (synthetic people only).
 - `docs/research/`: the research behind the design.
+- `prototypes/`: tested snippets from the research.

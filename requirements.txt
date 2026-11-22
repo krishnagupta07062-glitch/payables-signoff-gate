@@ -1,0 +1,5 @@
+anthropic>=0.70
+requests>=2.32
+streamlit>=1.40
+rapidfuzz>=3.9
+pytest>=8.0
