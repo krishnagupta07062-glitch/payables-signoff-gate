@@ -228,7 +228,7 @@ t5b = (INVOICE_TEXT.format(gstin=ACME_GSTIN).replace("0042", "0050")
                 "Please remit to our ICICI Bank account ending 7777, which is already on your vendor master."))
 case("05b", "calm", "First invoice to the newly approved account (after case 5)", "ESCALATE", ["E2"],
      req("C05b-calm", "invoice", t5b, "asha.rao@acmeleather.in", "Asha Rao", po=PO),
-     inv("INV/2026-27/0050", pay_to_account=ACME_NEW_ACCT, pay_to_ifsc="ICIC0000456"),
+     inv("INV/2026-27/0050", pay_to_account="7777"),
      invoice_checks(account_on_vendor_master=chk("account_on_vendor_master", V,
                                                  "Account ending 7777 is on the vendor master (added 2026-11-22 after approval)")))
 CASES[-1]["vendor"] = ACME_AFTER_CHANGE  # the vendor master as it stands after case 5's change was approved

@@ -6,7 +6,7 @@ Hackathon build (ContextCon 05, 22 Nov 2026). **Code freeze 18:00 IST.** Four pe
 
 | Owner | Paths |
 |---|---|
-| Krishna (core) | `gate/contracts.py`, `gate/extractor.py`, `gate/sanitize.py`, `gate/policy.py`, `gate/pipeline.py`, `gate/baseline_guard.py`, `fixtures/`, `tests/core/`, `scripts/run_demo.py`, `README.md`, `docs/` |
+| Krishna (core) | `gate/contracts.py`, `gate/extractor.py`, `gate/sanitize.py`, `gate/policy.py`, `gate/pipeline.py`, `gate/baseline_guard.py`, `gate/crosscheck.py`, `gate/llm_gemini.py`, `fixtures/`, `tests/core/`, `scripts/run_demo.py`, `README.md`, `docs/` |
 | Lavya (checks) | `gate/verifiers/**`, `tests/verifiers/`, `scripts/warm_cache.py` |
 | Ayush (pay + UI) | `gate/store.py`, `gate/ledger.py`, `gate/executor.py`, `gate/payments/**`, `app/**`, `tests/pay/` |
 | Sibayan (eval + MCP) | `eval/**`, `mcp_server/**`, `tests/eval/` |

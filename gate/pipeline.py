@@ -193,6 +193,13 @@ def run(request: Request, budget: RunBudget, vendor: Optional[Vendor] = None,
             checks = [Check("verifiers", CheckStatus.UNVERIFIABLE, note=f"verifiers crashed: {type(e).__name__}: {e}")]
             trace.append(f"verify: crashed ({type(e).__name__}); everything unverifiable")
 
+    # 3b. second, fixed-format reading of the money fields; disagreement with the model escalates (E9)
+    from gate.crosscheck import crosscheck
+    from gate.sanitize import sanitize
+    xc = crosscheck(claims, sanitize(request.raw_text)[0])
+    checks = [c for c in checks if c.name != xc.name] + [xc]
+    trace.append(f"crosscheck: {xc.status.value} {xc.note[:90]}")
+
     # 4. decide in code
     decision = policy.decide(request, claims, vendor, checks, today=today)
     trace.append(f"decide: {decision.verdict.value} {decision.rule_ids}")

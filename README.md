@@ -82,6 +82,16 @@ Where the plain guard went wrong:
 
 The plain guard did catch the bank-change risk in general. What it can't do is check anything, because the only thing it sees is the email.
 
+### Live checks on a real company
+
+`python scripts/run_demo.py --live-checks --only-private` runs live Crustdata, RDAP, IFSC and GST checks on three private bank-change emails about **Bata India** (stored extraction, so no real names go to the model). All three come out right, for 0.69 credits: a lookalike domain naming the current CFO is BLOCKED; a finance head who left in October 2026 is BLOCKED (the index has two people with that name, and the reason says which one was matched and why); the real CFO on the real domain is ESCALATED for a callback.
+
+**Honesty note:** these three cases were used *during development* to fix the checks (same-name matching, bot-blocked sites), so they are development data, not a clean test. A held-out run on a fresh company nobody tuned against is reported in `docs/ISSUES.md` when it's done.
+
+### Second reading of the money fields
+
+The extractor is the one place a model still shapes the outcome. `gate/crosscheck.py` reads IFSC, GSTIN, account and invoice numbers a second way with fixed patterns. If the model's value isn't in the text, the two readings disagree and the request goes to a person (E9). On its first run it caught an inconsistency in our own fixture.
+
 Committed fixtures use synthetic companies and people. Live demos against real companies use `fixtures/private/`, which is gitignored.
 
 ## Approaches we weighed
