@@ -27,7 +27,7 @@ def test_second_run_spends_nothing(live, http, monkeypatch, capsys):
     wc = _load()
     monkeypatch.setattr(wc, "_load_env", lambda: None)
     monkeypatch.setenv("CRUSTDATA_API_KEY", "test")
-    monkeypatch.setattr(sys, "argv", ["warm_cache.py", "--quiet"])
+    monkeypatch.setattr(sys, "argv", ["warm_cache.py", "--quiet", "--all"])  # synthetic cases: the private ones aren't in git
 
     assert wc.main() == 0
     first = _credits(capsys.readouterr().out)

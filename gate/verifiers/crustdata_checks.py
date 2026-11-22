@@ -237,11 +237,36 @@ _PERSON_FIELDS = [
 
 
 def _person_search(cd: Crustdata, name: str, company_id: int, budget) -> CallResult:
+    # limit 10, not 3: with several same-name people at a vendor we must see them all to pick the right one
+    # (billed per returned result, so a unique name still costs one result)
     return _call(cd, "/person/search", {
         "filters": {"op": "and", "conditions": [
             {"field": "basic_profile.name", "type": "(.)", "value": name},
             {"field": "experience.employment_details.company_id", "type": "=", "value": company_id}]},
-        "fields": _PERSON_FIELDS, "limit": 3}, budget)
+        "fields": _PERSON_FIELDS, "limit": 10}, budget)
+
+
+MIN_ROLE_SCORE = 60   # with several same-name candidates, the best one's role must match at least this well
+ROLE_MARGIN = 10      # ...and beat the runner-up by more than this, or we can't tell them apart
+
+
+def _role_score(claimed: Optional[str], title: Optional[str]) -> float:
+    if not claimed or not title:
+        return 0.0
+    return float(fuzz.token_set_ratio(_norm_role(claimed), _norm_role(title)))
+
+
+def _candidate(p: dict, who: str, claimed_role: Optional[str], vid: int) -> dict:
+    """One person-search profile, scored for 'is this the person who signed the request?'."""
+    emp = (p.get("experience") or {}).get("employment_details") or {}
+    here = [dict(r, _current=True) for r in (emp.get("current") or []) if r.get("crustdata_company_id") == vid] + \
+           [dict(r, _current=False) for r in (emp.get("past") or []) if r.get("crustdata_company_id") == vid]
+    best = max(here, key=lambda r: _role_score(claimed_role, r.get("title")), default=None)
+    recency = max(("9999" if r["_current"] else (r.get("end_date") or "")) for r in here) if here else ""
+    return {"profile": p, "pid": p.get("crustdata_person_id"),
+            "name_score": fuzz.token_set_ratio(norm_person(who), norm_person((p.get("basic_profile") or {}).get("name"))),
+            "role_score": _role_score(claimed_role, best.get("title")) if best else 0.0,
+            "vendor_title": best.get("title") if best else None, "recency": recency}
 
 
 def requester_checks(claims: Claims, vendor: Vendor, budget: Optional[RunBudget] = None,
@@ -261,26 +286,32 @@ def requester_checks(claims: Claims, vendor: Vendor, budget: Optional[RunBudget]
     except (CrustdataError, BudgetExceeded) as e:
         return [_fail(n1, e, CALLBACK), _fail(n2, e, "cannot tell whether the requester left the vendor")]
     profiles = (res.data or {}).get("profiles") or []
-    want = norm_person(who)
-    # pick the profile whose name matches the claimed name best
-    scored = sorted(((fuzz.token_set_ratio(want, norm_person((p.get("basic_profile") or {}).get("name"))), p)
-                     for p in profiles), key=lambda t: -t[0])
-    scored = [(s, p) for s, p in scored if s >= 85]
-    if not scored:
-        s0 = _src(res, excerpt=f"no person named '{who}' at company {vendor.crustdata_company_id}")
+    vid = vendor.crustdata_company_id
+    cands = [c for c in (_candidate(p, who, claims.requester_role, vid) for p in profiles) if c["name_score"] >= 85]
+    if not cands:
+        s0 = _src(res, excerpt=f"no person named '{who}' at company {vid}")
         return [unverifiable(n1, f"No one named {who} found at {vendor.legal_name} in Crustdata; {CALLBACK}.", [s0],
                              credits=res.credits),
                 unverifiable(n2, f"No one named {who} found at {vendor.legal_name} in Crustdata.", [s0])]
-    if len({norm_person((p.get("basic_profile") or {}).get("name")) for _, p in scored}) > 1 and scored[0][0] < 100:
-        s0 = _src(res, excerpt=f"{len(scored)} people match '{who}'")
-        return [unverifiable(n1, f"Several people named like {who} at the vendor; {CALLBACK}.", [s0], credits=res.credits),
-                unverifiable(n2, f"Several people named like {who}; cannot tell who sent this.", [s0])]
-    p = scored[0][1]
+    # Same-name risk: several people with this name worked at the vendor. Pick by how well their role there
+    # matches the claimed role, then by the most recent role. If that still doesn't separate them, say so.
+    cands.sort(key=lambda c: (c["role_score"], c["name_score"], c["recency"]), reverse=True)
+    if len(cands) > 1:
+        best, second = cands[0], cands[1]
+        if best["role_score"] < MIN_ROLE_SCORE or second["role_score"] >= best["role_score"] - ROLE_MARGIN:
+            s0 = _src(res, excerpt="; ".join(f"person {c['pid']}: {c['vendor_title'] or '?'}" for c in cands[:5]))
+            msg = (f"{len(cands)} people named like {who} worked at {vendor.legal_name}, and the claimed role "
+                   f"'{claims.requester_role or 'none'}' doesn't tell them apart")
+            return [unverifiable(n1, f"{msg}; {CALLBACK}.", [s0], {"candidates": len(cands)}, res.credits),
+                    unverifiable(n2, f"{msg}; cannot tell which one sent this.", [s0], {"candidates": len(cands)})]
+    chosen = cands[0]
+    p = chosen["profile"]
     pid = p.get("crustdata_person_id")
+    picked_note = (f" Picked person {pid} of {len(cands)} with this name: role '{chosen['vendor_title']}' best matches "
+                   f"'{claims.requester_role}'.") if len(cands) > 1 else ""
     pname = (p.get("basic_profile") or {}).get("name") or who
     updated_at = (p.get("metadata") or {}).get("updated_at")
     emp = (p.get("experience") or {}).get("employment_details") or {}
-    vid = vendor.crustdata_company_id
     cur_here = [r for r in (emp.get("current") or []) if r.get("crustdata_company_id") == vid]
     past_here = [r for r in (emp.get("past") or []) if r.get("crustdata_company_id") == vid]
     cur_else = [r for r in (emp.get("current") or []) if r.get("crustdata_company_id") != vid]
@@ -290,32 +321,36 @@ def requester_checks(claims: Claims, vendor: Vendor, budget: Optional[RunBudget]
              f"{pname}: current at vendor={bool(cur_here)}, past at vendor={bool(past_here)}")
 
     if cur_here:
-        r = cur_here[0]
-        v1 = {"name": pname, "title": r.get("title"), "start_date": (r.get("start_date") or "")[:10] or None,
-              "updated_at": updated_at}
-        departed = check(n2, V, f"{pname} is a current employee of {vendor.legal_name}.",
-                         {"name": pname, "end_date": None, "current_employer": r.get("name")}, [s])
+        r = max(cur_here, key=lambda x: _role_score(claims.requester_role, x.get("title")))
+        start = (r.get("start_date") or "")[:10] or None
+        v1 = {"name": pname, "title": r.get("title"), "start_date": start, "updated_at": updated_at, "person_id": pid}
+        v2 = {"name": pname, "end_date": None, "current_employer": r.get("name"), "title": r.get("title"),
+              "start_date": start, "person_id": pid}
+        departed = check(n2, V, f"{pname} is a current employee of {vendor.legal_name}.{picked_note}", v2, [s])
         if stale:
             return [unverifiable(n1, f"{pname}'s record is {age if age is not None else '?'} days old (stale, over "
                                      f"{STALE_DAYS}); {CALLBACK}.", [s], v1, res.credits),
-                    unverifiable(n2, f"{pname}'s record is stale; cannot rule out a recent departure.", [s],
-                                 {"name": pname, "end_date": None, "current_employer": r.get("name")})]
+                    unverifiable(n2, f"{pname}'s record is stale; cannot rule out a recent departure.", [s], v2)]
         if not role_matches(claims.requester_role, r.get("title")):
             return [check(n1, C, f"{pname} works at {vendor.legal_name} as '{r.get('title')}', not as "
-                                 f"'{claims.requester_role}'.", v1, [s], res.credits), departed]
+                                 f"'{claims.requester_role}'.{picked_note}", v1, [s], res.credits), departed]
         return [check(n1, V, f"{pname} is {r.get('title')} at {vendor.legal_name} since "
-                             f"{(r.get('start_date') or '?')[:7]} (record updated {(updated_at or '?')[:10]}).",
+                             f"{(r.get('start_date') or '?')[:7]} (record updated {(updated_at or '?')[:10]}).{picked_note}",
                       v1, [s], res.credits), departed]
     if past_here:
-        r = max(past_here, key=lambda x: x.get("end_date") or "")
+        r = max(past_here, key=lambda x: (_role_score(claims.requester_role, x.get("title")), x.get("end_date") or ""))
         now_at = cur_else[0].get("name") if cur_else else None
         end = (r.get("end_date") or "")[:10] or None
-        v2 = {"name": pname, "end_date": end, "current_employer": now_at}
-        return [check(n1, C, f"{pname} no longer works at {vendor.legal_name} (left {end or 'at an unknown date'}).",
-                      {"name": pname, "title": r.get("title"), "start_date": (r.get("start_date") or "")[:10] or None,
-                       "updated_at": updated_at}, [s], res.credits),
-                check(n2, C, f"{pname} left {vendor.legal_name} ({r.get('title')}, ended {end or '?'})"
-                             + (f" and now works at {now_at}." if now_at else "."), v2, [s])]
+        start = (r.get("start_date") or "")[:10] or None
+        v2 = {"name": pname, "end_date": end, "current_employer": now_at, "title": r.get("title"), "start_date": start,
+              "person_id": pid}
+        return [check(n1, C, f"{pname} no longer works at {vendor.legal_name} (left {end or 'at an unknown date'})."
+                             f"{picked_note}",
+                      {"name": pname, "title": r.get("title"), "start_date": start, "updated_at": updated_at,
+                       "person_id": pid}, [s], res.credits),
+                check(n2, C, f"{pname} left {vendor.legal_name} ({r.get('title')}, {start[:7] if start else '?'} to "
+                             f"{end[:7] if end else '?'})" + (f" and now works at {now_at}." if now_at else ".")
+                             + picked_note, v2, [s])]
     return [unverifiable(n1, f"{pname} was found but not linked to {vendor.legal_name}; {CALLBACK}.", [s],
                          credits=res.credits),
             unverifiable(n2, f"{pname} was found but not linked to {vendor.legal_name}.", [s])]

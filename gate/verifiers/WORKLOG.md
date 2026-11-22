@@ -21,6 +21,19 @@ Tests: `tests/verifiers/` has 39 tests. Full suite: 96 passed, offline.
 
 ## Log
 
+### ~15:25: same-name fix (Krishna's case 12 bug), private cases, warm_cache defaults
+- Pulled main and read `docs/ISSUES.md`. Two items were addressed to Lavya: the same-name bug (top) and `warm_cache.py` defaulting to the private cases.
+- Installed Krishna's private fixtures (`fixtures/private/build_private.py`, gitignored) and built cases 11-13 against Bata India.
+- **Same-name bug, reproduced live:** two people with the departed finance head's name both worked at Bata (a 2015 sales intern and the finance head who left 2026-10). The check took the first result, the intern.
+  - Fix: score each candidate by role match to the claimed role, then by most recent role.
+  - If it's still ambiguous (best < 60, or runner-up within 10 points) → UNVERIFIABLE, never CONTRADICTED.
+  - The chosen person's id, title and dates go into `value`/`sources`.
+  - Search limit raised from 3 to 10. 4 new offline tests.
+- `warm_cache.py` now runs only the private live-demo cases by default (`--all` adds the synthetic ones). `--case` handles ids like "05b".
+- **Live, private cases 11-13:** BLOCK / BLOCK / ESCALATE, all as expected. Case 12 now matches the finance head (person 190891848). 0.69 credits cold, 0.00 warm.
+- Noted for Krishna: case 11 blocks because `bata-india.co` is unregistered (domain age), not because of the lookalike, which is weak (E10) under his split.
+- Tests: 143 passed.
+
 ### ~15:50: first live Crustdata run (Lavya's key in `.env`)
 - Tested live against Bata India (Crustdata id 573), the vendor in Krishna's live demo. 1.89 credits.
   - `bata.in` → sender domain VERIFIED (id 573, with request id and record id in the source).

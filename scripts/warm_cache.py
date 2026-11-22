@@ -1,7 +1,8 @@
 """Warm the Crustdata cache for every demo request before the demo. OWNER: Lavya.
 
-    python scripts/warm_cache.py                # all cases in fixtures/requests/ and fixtures/private/requests/
-    python scripts/warm_cache.py --case 3       # one case number
+    python scripts/warm_cache.py                # the private live-demo cases (fixtures/private/requests/)
+    python scripts/warm_cache.py --all          # also the synthetic cases (their domains don't resolve live)
+    python scripts/warm_cache.py --case 12      # one case number
     python scripts/warm_cache.py --credits 40   # credit ceiling for the whole run (default 40)
     python scripts/warm_cache.py --extract      # use the live extractor instead of each case's stored claims
 
@@ -19,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -49,6 +51,8 @@ def _short(s: str | None, n: int) -> str:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--case", type=int, help="only this case number")
+    ap.add_argument("--all", action="store_true",
+                    help="include the synthetic cases (by default only fixtures/private/, the live-demo cases)")
     ap.add_argument("--credits", type=float, default=40.0, help="credit ceiling for the whole run")
     ap.add_argument("--extract", action="store_true", help="use the live extractor instead of stored claims")
     ap.add_argument("--quiet", action="store_true", help="print only the per-case summary lines and the total")
@@ -67,9 +71,15 @@ def main() -> int:
     from gate.contracts import Vendor
 
     vendors = load_vendors()
-    files = [f for f in all_case_files() if a.case is None or load_case(f).get("case") == a.case]
+    def case_no(f: Path):
+        m = re.match(r"\d+", str(load_case(f).get("case", "")))  # case ids can be strings like "05b"
+        return int(m.group()) if m else None
+
+    files = [f for f in all_case_files()
+             if (a.all or "private" in f.parts) and (a.case is None or case_no(f) == a.case)]
     if not files:
-        print("No case files found.")
+        print("No case files found." + ("" if a.all else " Private cases go in fixtures/private/requests/ "
+                                        "(run fixtures/private/build_private.py); use --all for the synthetic ones."))
         return 1
     budget = RunBudget(max_credits=a.credits, max_seconds=3600, run_id="warm-" + time.strftime("%H%M%S"))
 

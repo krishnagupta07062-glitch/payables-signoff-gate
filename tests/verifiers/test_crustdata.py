@@ -119,9 +119,54 @@ def test_requester_departed(live, vendor, budget):
     now = [{"name": "Elsewhere Ltd", "title": "CFO", "crustdata_company_id": 7}]
     live({"/person/search": (200, {}, person_resp("Riya Synthetic", current=now, past=past))})
     cur, dep = cdc.requester_checks(Claims(requester_name="Riya Synthetic", requester_role="CFO"), vendor, budget)
-    assert dep.status == C and dep.value == {"name": "Riya Synthetic", "end_date": "2026-10-01",
-                                             "current_employer": "Elsewhere Ltd"}
+    assert dep.status == C and {k: dep.value[k] for k in ("name", "end_date", "current_employer", "person_id")} == \
+        {"name": "Riya Synthetic", "end_date": "2026-10-01", "current_employer": "Elsewhere Ltd", "person_id": 4242}
     assert cur.status == C
+
+
+def _two_same_name(first_title, second_title, second_current=False):
+    """Two synthetic people called 'Dev Synthetic' who both worked at the vendor; the intern comes back first."""
+    intern = {"crustdata_person_id": 111, "metadata": {"updated_at": days_ago(3)}, "basic_profile": {"name": "Dev Synthetic"},
+              "experience": {"employment_details": {
+                  "current": [{"name": "Elsewhere Ltd", "title": "Regional Sales Manager", "crustdata_company_id": 7}],
+                  "past": [{**AT_VENDOR, "title": first_title, "start_date": "2015-05-01T00:00:00",
+                            "end_date": "2015-08-01T00:00:00"}]}}}
+    role = {**AT_VENDOR, "title": second_title, "start_date": "2024-11-01T00:00:00"}
+    head = {"crustdata_person_id": 222, "metadata": {"updated_at": days_ago(5)}, "basic_profile": {"name": "Dev Synthetic"},
+            "experience": {"employment_details": {
+                "current": [role] if second_current else [],
+                "past": [] if second_current else [{**role, "end_date": "2026-10-01T00:00:00"}]}}}
+    return {"total_count": 2, "profiles": [intern, head]}
+
+
+def test_same_name_picks_the_one_whose_role_matches(live, vendor, budget):
+    # spec: private case 12 (two same-name people at the vendor; the finance head left 2026-10)
+    live({"/person/search": (200, {}, _two_same_name("Sales And Marketing Intern", "Head - Finance Shared Services"))})
+    cur, dep = cdc.requester_checks(Claims(requester_name="Dev Synthetic",
+                                           requester_role="Head - Finance Shared Services"), vendor, budget)
+    assert dep.status == C and dep.value["person_id"] == 222 and dep.value["end_date"] == "2026-10-01"
+    assert dep.value["title"] == "Head - Finance Shared Services" and dep.sources[0].record_id == "222"
+    assert "Picked person 222 of 2" in dep.note
+
+
+def test_same_name_current_holder_wins(live, vendor, budget):
+    live({"/person/search": (200, {}, _two_same_name("Finance Intern", "Chief Financial Officer", second_current=True))})
+    cur, dep = cdc.requester_checks(Claims(requester_name="Dev Synthetic", requester_role="CFO"), vendor, budget)
+    assert cur.status == V and cur.value["person_id"] == 222 and dep.status == V
+
+
+def test_same_name_ambiguous_is_unverifiable(live, vendor, budget):
+    # both held finance roles: the claimed role can't separate them -> never CONTRADICTED
+    live({"/person/search": (200, {}, _two_same_name("Finance Manager", "Finance Manager"))})
+    cur, dep = cdc.requester_checks(Claims(requester_name="Dev Synthetic", requester_role="Finance Manager"),
+                                    vendor, budget)
+    assert cur.status == U and dep.status == U and "2 people" in dep.note and "call back" in cur.note
+
+
+def test_same_name_no_role_claimed_is_unverifiable(live, vendor, budget):
+    live({"/person/search": (200, {}, _two_same_name("Sales Intern", "Head - Finance Shared Services"))})
+    cur, dep = cdc.requester_checks(Claims(requester_name="Dev Synthetic"), vendor, budget)
+    assert cur.status == U and dep.status == U
 
 
 def test_requester_stale_record(live, vendor, budget):
