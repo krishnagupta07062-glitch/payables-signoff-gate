@@ -50,4 +50,4 @@ Waiting for first push. Expected: `gate/verifiers/{crustdata_client,crustdata_ch
 
 ## Open items
 
-- `ANTHROPIC_API_KEY` is not set on Krishna's machine yet, so live extraction falls back to stored claims (the trace says so).
+- Krishna's Anthropic key has no credit, so the free **Gemini** provider was added: set `GATE_PROVIDER=gemini` and `GEMINI_API_KEY` (from aistudio.google.com/apikey) in `.env`. Without a working key, live extraction falls back to stored claims and the trace says so.

@@ -30,6 +30,18 @@ SCHEMA = {
 
 def judge(request: Request, vendor: Optional[Vendor], budget: RunBudget) -> dict:
     """Returns {"verdict": ..., "reason": ...}, or {"verdict": None, "reason": <error>} if unavailable."""
+    from gate import llm_gemini
+    known0 = f"Known vendor on file: {vendor.legal_name} (domains: {', '.join(vendor.domains)})" if vendor else ""
+    if llm_gemini.provider() == "gemini":
+        out, err = llm_gemini.generate_json(SYSTEM, f"{known0}
+From: {request.sender_display or ''} <{request.sender_email or ''}>"
+                                            f"
+
+{request.raw_text}", SCHEMA, budget, "baseline")
+        if out is None:
+            return {"verdict": None, "reason": f"baseline unavailable: {err}"}
+        v = out.get("verdict")
+        return {"verdict": v if v in ("ALLOW", "BLOCK", "ESCALATE") else None, "reason": str(out.get("reason", ""))}
     try:
         import anthropic
         model = os.environ.get("GATE_MODEL", DEFAULT_MODEL)

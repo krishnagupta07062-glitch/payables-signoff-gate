@@ -4,6 +4,7 @@ The model only EXTRACTS what the text claims. It never decides, never judges tru
 validated field by field: anything malformed becomes None, so the policy sees "unknown" and escalates.
 
 Uses Claude structured outputs (output_config.format json_schema): the response is guaranteed JSON.
+GATE_PROVIDER=gemini uses Google Gemini instead (gate/llm_gemini.py, free tier); same schema, same validation.
 MOCK=1 (or a request carrying `mock_claims`) returns stored claims without calling the API.
 """
 from __future__ import annotations
@@ -142,6 +143,13 @@ def extract(request: Request, budget: RunBudget, mock_claims: Optional[dict] = N
         c = validate(mock_claims)
         c.removed_hidden_content = removed
         budget.charge("anthropic", "messages(mock)", 0.0, cached=True, note="mock claims")
+        return c
+
+    from gate import llm_gemini
+    if llm_gemini.provider() == "gemini":
+        obj, err = llm_gemini.generate_json(SYSTEM, _user_message(request, visible), SCHEMA, budget, "extract")
+        c = validate(obj) if obj is not None else Claims(extraction_notes=f"extraction failed: gemini {err}")
+        c.removed_hidden_content = removed
         return c
 
     import anthropic  # imported lazily so offline tests don't need the package configured
