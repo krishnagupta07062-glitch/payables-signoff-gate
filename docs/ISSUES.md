@@ -17,6 +17,18 @@ Append only. Each entry: the file, the owner, the failing test or command, and t
 
 ## checks
 
+- **~16:20, from Lavya, for Krishna and Sibayan: three suggestions from our earlier guard research ("Small Gatekeepers").** That project measured an LLM policy gate (ALLOW/BLOCK/ESCALATE) on thousands of complaints. Its best design, "V1", is ours: a model only names the claim, code applies the policy, and disagreement goes to a person. On 807 fresh real disputes it cut wrongful approvals from 22.1% to 10.5% (a model deciding alone) with no tone penalty. Three of its lessons fit here; none blocks the freeze.
+  1. **For Sibayan (eval): report the gatekeeper metrics, not just "N/N cases pass".** Its pass/fail table had three numbers:
+     - **tone penalty**: how often the decision flips between a calm and a pushy version of the same request;
+     - **wrongful approvals** (ALLOW on a bad request);
+     - **valid requests sent to a person** (over-refusal), plus the exchange rate: extra reviews per wrongful approval stopped.
+
+     We already have calm/pushy/Hinglish pairs, so this is cheap: the gate has 0 flips across tones and 17/17 correct; the plain model guard (`--contrast`) has 6/14 correct, and its flips would be worth counting. One table with both rows shows judges *why* the design works.
+  2. **For Krishna (extractor): the extractor is where errors leak.** The research's finding was "extract-then-code is cheap but leaks near-misses". The extractor is the one place a model still shapes the outcome, and its output now drives checks too (`requester_role` picks between same-name people). Two cheap guards:
+     - **Claim-flip test:** run live extraction on each calm/pushy/Hinglish pair and assert the extracted `Claims` are identical. Any field that changes with tone is a leak.
+     - **Second reading, disagreement → ESCALATE:** read IFSC, GSTIN, account number and invoice number a second way, with fixed regex patterns, since these have strict formats. If the regex reading and the model's reading disagree, escalate (E6). That is V1's "disagreement goes to a person", applied to the fields that move money.
+  3. **For Krishna (README): be honest that cases 11-13 are now development data.** The research's rule was that a fix is tested on fresh data, never on the data that found the bug. The private Bata cases were used to *fix* the checks (same-name matching, bot-blocked site), so they no longer count as a clean test. Either say so in the README, or I run the checks on **one fresh real company** nobody has tuned against (about 1 credit) and we report that as the held-out result. Tell me if you want the second option.
+
 - **~16:10, from Lavya (checks), for everyone: E4 no longer fires on a vendor's next invoice (bug fix).** `near_duplicate_invoice` scored invoice numbers alone. In the standard `INV/2026-27/NNNN` format, `0043` after `0042` scores 90 (and `0142` 95, `0024` 90), so every sequential bill would have escalated (E4). Now a similar number counts only with the same amount (±0.5%), or when an amount is unreadable; same amount within 10 days still counts. A re-sent bill with a tweaked number is still caught. No demo case changes (17/17 offline, 3/3 live private). Tests: `tests/verifiers/test_history_checks.py::test_next_sequential_invoice_is_not_a_near_duplicate` and two more.
 
 - **~15:55, from Lavya (checks), for everyone: integration summary (Lavya 2 prompt), and polish (Lavya 3) done.**
