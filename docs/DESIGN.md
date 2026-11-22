@@ -77,14 +77,14 @@ Rules are checked in order; the first BLOCK wins, then any ESCALATE, otherwise A
 | B6 | A payment to an account not on the vendor master (`account_on_vendor_master` CONTRADICTED, or the invoice names another account), or `ifsc_valid` / `penny_drop_name_match` CONTRADICTED | BLOCK |
 | E1 | `requested_change == bank_change` | ESCALATE, and hold the vendor's payments |
 | E2 | First payment to an account added less than 3 business days ago | ESCALATE |
-| E3 | `penny_drop_name_match` UNVERIFIABLE (score 60–89, failed, or not run) on a new account | ESCALATE |
+| E3 | `penny_drop_name_match` UNVERIFIABLE (score 60-89, failed, or not run) on a new account | ESCALATE |
 | E4 | `near_duplicate_invoice` CONTRADICTED | ESCALATE |
 | E5 | `po_match` CONTRADICTED or UNVERIFIABLE on an invoice | ESCALATE |
 | E6 | Any check a rule needs is UNVERIFIABLE (name the missing source in the reason) | ESCALATE |
 | E7 | Pay-to country differs from the vendor's country | ESCALATE |
 | E8 | Amount above the vendor's per-payment or per-day limit | ESCALATE |
 | E9 | Any other CONTRADICTED check not used by a BLOCK rule (e.g. `vendor_news`, `sender_domain_matches_vendor`) | ESCALATE |
-| E10 | `sender_domain_lookalike` CONTRADICTED on a weak signal only (same name under another ending, or contains the vendor's name). Strong signals (punycode, look-alike characters, 1–2 edits) stay B2 | ESCALATE |
+| E10 | `sender_domain_lookalike` CONTRADICTED on a weak signal only (same name under another ending, or contains the vendor's name). Strong signals (punycode, look-alike characters, 1-2 edits) stay B2 | ESCALATE |
 | A1 | None of the above | ALLOW |
 
 ## 5. Checks (`gate/verifiers/`)
@@ -96,7 +96,7 @@ Rules are checked in order; the first BLOCK wins, then any ESCALATE, otherwise A
 | `domain_age_days` | RDAP: `rdap.verisign.com/com/v1/domain/<d>`, `rdap.nixiregistry.in/rdap/domain/<d>` | Free. A timeout gives UNVERIFIABLE. |
 | `vendor_active` | Crustdata `metadata.updated_at` + `POST /web/enrich/live` on the domain | 1 credit. Catches expired domains. |
 | `requester_current_role` / `requester_departed` | Crustdata `POST /person/search`: name + `experience.employment_details.company_id` | About 0.23 credits per result. Read `current.crustdata_company_id`; past roles carry `end_date`. Records older than 30 days count as stale. |
-| `gstin_checksum`, `gstin_matches_vendor` | Local mod-36 check digit; PAN = characters 3–12; state = characters 1–2 | Free |
+| `gstin_checksum`, `gstin_matches_vendor` | Local mod-36 check digit; PAN = characters 3-12; state = characters 1-2 | Free |
 | `gstin_exists` | GST portal `services/api/search/goodservice?gstin=` (browser headers and cookies) | Free. A miss gives UNVERIFIABLE. |
 | `ifsc_valid` | `https://ifsc.razorpay.com/<IFSC>` | Free; an unknown IFSC returns 404 |
 | `account_on_vendor_master`, `account_shared_across_vendors` | Vendor record + `store.history_for()` | Free |
