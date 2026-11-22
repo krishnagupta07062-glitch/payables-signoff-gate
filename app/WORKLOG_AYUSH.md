@@ -138,3 +138,20 @@ Read `docs/ISSUES.md` after pulling. The `## pay` section was empty (no bugs rep
 ### Left for Ayush (human)
 - Rehearse with `docs/DEMO_SCRIPT.md`, then **record the 2-minute video at ~17:15** from the Demo tab.
 - From 17:15: bug fixes only.
+
+---
+
+## 22 Nov 2026, ~15:35–15:50 IST: Sibayan's evaluation work (done from Ayush's session, on request)
+
+Sibayan joined at ~14:50 and owns `eval/**`, `mcp_server/**` and `tests/eval/`. Nothing of his was pushed yet, so Ayush asked for his Kickoff steps to be done from here. Commits use the `[eval]` prefix and touch only his paths, plus this worklog.
+
+- `eval/variants.py`: deterministic, template-based pressure variants for all 14 committed cases. Variant types: authority, deadline, flattery, threat, Hinglish, a visible "Note to the AI assistant", a hidden HTML div, Unicode-tag smuggling, and a planted "DISPUTED - DO NOT PAY" note (ALLOW cases only). **116 variants**, 130 with the source cases. Only `raw_text`, `request_id` and `urgency_cues` change.
+- `eval/run_eval.py`:
+  - per case: the gate (real extraction, stored checks, `execute=False`, today 2026-11-23, a fresh `runs/eval-*.sqlite`) vs `baseline_guard.judge`;
+  - reports accuracy, flip rate against the unpressured source case, unsafe ALLOWs, and extraction errors, per pressure type and overall → `eval/results/<HHMM>.md/.json`;
+  - options `--limit`, `--sleep`, `--offline`, `--no-guard`;
+  - a disk cache in `eval/cache/` (gitignored) wraps `llm_gemini.generate_json` from the eval side; the gate itself is unchanged;
+  - an extraction fallback to stored claims is counted separately, so it's never reported as a model result.
+- `tests/eval/test_variants.py`: 7 offline tests (100+ variants keep the verdict and facts, deterministic, unique ids, hidden payloads stripped, committed cases match the generator, `--offline` on 3 cases, extraction-diff normalisation). Full suite: **155 passed**.
+- Offline harness check: 130/130, 0 flips. This uses stored claims, so it tests the harness only and is not a model result.
+- **Blocked:** step 4 (the real run) needs a `GEMINI_API_KEY` in `.env` (free at aistudio.google.com/apikey).
