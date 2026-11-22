@@ -19,7 +19,8 @@ _HTML = """<!doctype html><html><head><meta charset="utf-8">
   html, body { margin:0; height:100%; background:var(--canvas); overflow:hidden; }
   .hero { display:grid; grid-template-columns: minmax(0,1.05fr) minmax(0,1fr); height:100%; align-items:center; }
   h1 { font-family:'Geist', system-ui, sans-serif; font-weight:500; color:var(--ink); margin:0;
-       font-size:clamp(2.4rem, 4.6vw, 4.5rem); line-height:1.03; letter-spacing:-0.045em; max-width:13ch;
+       font-size:clamp(2.5rem, 4.8vw, 4.7rem); line-height:1.02; letter-spacing:-0.048em; max-width:13ch;
+       text-wrap:balance; font-feature-settings:'ss01';
        animation: rise .7s cubic-bezier(.2,.7,.2,1) both; }
   mark { background:linear-gradient(transparent 64%, var(--lime) 64%); color:inherit; padding:0 .04em; }
   canvas { width:100%; height:100%; display:block; cursor:crosshair; }

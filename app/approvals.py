@@ -300,7 +300,7 @@ with tab_demo:
         res = ds.get(step["id"])
         st.divider()
         h_l, h_r = st.columns([4, 1])
-        h_l.markdown(f"<h2 style='font-size:1.4rem;margin:0 0 .3rem'><span class='sg-step'>{i:02d}</span>"
+        h_l.markdown(f"<h2 style='font-size:1.6rem;font-weight:500;letter-spacing:-0.03em;line-height:1.2;margin:0 0 .45rem'><span class='sg-step'>{i:02d}</span>"
                      f"{html.escape(step['title'])}</h2>", unsafe_allow_html=True)
         h_l.caption(":material/mic: " + step["say"])
         crash = step["id"] == "crash"

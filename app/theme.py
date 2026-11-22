@@ -15,7 +15,7 @@ CARD = "#FFFFFF"
 SUNK = "#EDEAE4"
 LINE = "#E2DED6"
 INK = "#141414"
-MUTED = "#6B6760"
+MUTED = "#57534C"
 DIM = "#9A958C"
 LIME = "#E4F222"       # the accent: primary actions and highlights only, never text
 OK = "#2F7D3B"         # verified / ALLOW
@@ -43,12 +43,18 @@ CSS = f"""
 [data-testid="stHeader"] {{ background: transparent; }}
 [data-testid="stMainBlockContainer"] {{ max-width: 1280px; padding-top: 2.4rem; }}
 
-/* type: large, tight, quiet */
+/* type: large, tight, quiet; comfortable measure and rhythm for reading */
+.stApp p, .stApp li {{ line-height: 1.65; text-wrap: pretty; }}
+h1, h2, h3, .sg-hero {{ text-wrap: balance; }}
+.stMarkdown [data-testid="stMarkdownContainer"] > p {{ font-size: 1.02rem; }}
 h1, h2, h3 {{ letter-spacing: -0.035em; color: var(--ink); font-weight: 500 !important; }}
 h4 {{ text-transform: uppercase; letter-spacing: .1em; color: var(--muted) !important;
       font-size: .78rem !important; font-weight: 600 !important; margin-top: 1.8rem !important; }}
 [data-testid="stCaptionContainer"] {{ color: var(--muted) !important; }}
-[data-testid="stCaptionContainer"] p {{ font-size: .95rem; line-height: 1.6; }}
+[data-testid="stCaptionContainer"] p {{ font-size: 1rem; line-height: 1.65; max-width: 68ch; color: var(--muted); }}
+[data-testid="stCaptionContainer"] {{ opacity: 1 !important; }}
+[data-testid="stCaptionContainer"] p {{ color: var(--muted) !important; }}
+[data-testid="stMetricValue"] p {{ font-size: inherit !important; }}
 code {{ font-family: var(--mono) !important; font-variant-numeric: tabular-nums; border-radius: 5px; }}
 b, strong {{ font-weight: 600; }}
 hr {{ border-color: var(--line) !important; opacity: 1; }}
@@ -144,11 +150,11 @@ a {{ text-underline-offset: 3px; text-decoration-thickness: 1px; }}
 .sg-head {{ display: flex; align-items: center; flex-wrap: wrap; gap: .9rem; margin: .2rem 0 .6rem;
   animation: sg-rise .3s var(--ease) both; }}
 .sg-head .sg-id {{ font-family: var(--mono); font-size: 1.05rem; font-weight: 500; }}
-.sg-reason {{ display: flex; gap: .8rem; align-items: baseline; padding: .6rem 0; border-bottom: 1px solid var(--line); }}
+.sg-reason {{ display: flex; gap: .9rem; align-items: baseline; padding: .7rem 0; line-height: 1.55; font-size: 1.04rem; border-bottom: 1px solid var(--line); }}
 .sg-reason:last-child {{ border-bottom: 0; }}
 .sg-rule {{ font-family: var(--mono); font-size: .78rem; font-weight: 600; color: var(--ink); background: var(--lime);
   border-radius: 6px; padding: .16em .5em; white-space: nowrap; }}
-.sg-check {{ border: 1px solid var(--line); border-radius: 12px; background: var(--card); padding: .8rem 1rem;
+.sg-check {{ border: 1px solid var(--line); border-radius: 12px; background: var(--card); padding: .9rem 1.1rem; line-height: 1.6;
   margin: .5rem 0; box-shadow: inset 3px 0 0 var(--c, var(--line));
   transition: box-shadow .2s var(--ease), transform .2s var(--ease); }}
 .sg-check:hover {{ box-shadow: inset 3px 0 0 var(--c, var(--line)), var(--shadow); }}
@@ -172,7 +178,8 @@ a {{ text-underline-offset: 3px; text-decoration-thickness: 1px; }}
 .sg-big .sg-rules {{ font-family: var(--mono); font-size: 1.05rem; color: var(--muted); }}
 .sg-count {{ font-size: 1.25rem; }}
 .sg-count b {{ font-family: var(--mono); font-size: 1.6rem; background: var(--lime); border-radius: 6px; padding: 0 .3em; }}
-.sg-step {{ font-family: var(--mono); color: var(--dim); margin-right: .55rem; font-weight: 400; }}
+.sg-step {{ font-family: var(--mono); color: var(--dim); margin-right: .65rem; font-weight: 400; font-size: .8em;
+  vertical-align: .12em; }}
 .sg-hero {{ font-size: 2.6rem; font-weight: 500; letter-spacing: -0.04em; line-height: 1.08; max-width: 22ch; }}
 .sg-hero mark {{ background: linear-gradient(transparent 64%, var(--lime) 64%); color: inherit; padding: 0 .05em; }}
 

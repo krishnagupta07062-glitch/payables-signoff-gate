@@ -22,8 +22,8 @@ ORANGE = "#FF7A1A"
 
 CSS = """
 <style>
-:root { --a-bg:#E2E2DF; --a-side:#D5D5D1; --a-card:#ECECE9; --a-line:#C7C7C2; --a-text:#141414; --a-muted:#55554F;
-        --a-black:#111111; --a-orange:#E2600A; }
+:root { --a-bg:#C4C4C0; --a-side:#B6B6B1; --a-card:#D3D3CF; --a-line:#A6A6A0; --a-text:#101010; --a-muted:#3F3F3A;
+        --a-black:#111111; --a-orange:#C95205; }
 .stApp, [data-testid="stAppViewContainer"] { background: var(--a-bg) !important; color: var(--a-text); }
 [data-testid="stHeader"] { background: transparent !important; }
 [data-testid="stSidebar"] { background: var(--a-side) !important; border-right: 1px solid var(--a-line); }
@@ -34,7 +34,7 @@ CSS = """
   padding-top: 1.3rem !important; margin-top: 1.2rem; }
 [data-testid="stMainBlockContainer"] h2::before { content: "## "; color: var(--a-orange); }
 [data-testid="stMainBlockContainer"] h3 { font-size: 1rem !important; }
-[data-testid="stMainBlockContainer"] h3::before { content: "### "; color: #8A8A84; }
+[data-testid="stMainBlockContainer"] h3::before { content: "### "; color: #6E6E68; }
 .stApp a { color: var(--a-text) !important; text-decoration-color: var(--a-orange) !important; text-underline-offset: 3px; }
 .stApp a:hover { color: var(--a-orange) !important; }
 [data-testid="stCaptionContainer"] p { color: var(--a-muted) !important; }
@@ -49,7 +49,7 @@ CSS = """
   { color: #B4B4AE !important; }
 [data-testid="stCode"] .token.punctuation, [data-testid="stCode"] .token.table { color: #8C8C86 !important; }
 [data-testid="stCode"] button { color: #E6E6E2 !important; }
-[data-testid="stMarkdownContainer"] code { background: #D3D3CF !important; color: var(--a-text) !important; }
+[data-testid="stMarkdownContainer"] code { background: #B3B3AE !important; color: var(--a-text) !important; }
 [data-testid="stCode"] code, [data-testid="stCode"] pre > div { background: transparent !important; }
 .stApp [data-testid="stExpander"] details { background: var(--a-card) !important; border-color: var(--a-line) !important; }
 .stApp input { background: var(--a-card) !important; color: var(--a-text) !important; }
