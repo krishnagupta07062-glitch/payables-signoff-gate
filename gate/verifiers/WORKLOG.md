@@ -24,6 +24,13 @@ Tests: `tests/verifiers/` has 39 tests. Full suite: 96 passed, offline.
 
 ## Log
 
+### ~16:30: held-out company check (Asian Paints), pre-registered, run once
+- Following the gatekeeper rule: cases and expected results were written down first, code was frozen at `84ce2d8`, and the run happened once with no tuning. Pre-registration, script and output are kept locally (not in git: real people).
+- Results: **3 of 4 verdicts as expected** (H1 ESCALATE, H2 BLOCK with a strong lookalike, H4 ESCALATE). **H3 failed:** a departed finance employee should BLOCK (B3) but ESCALATED.
+- Diagnosis from the call log: the 5-per-minute rate limit. The person search waited about 50 s, `run_all`'s 20 s deadline expired, and the check failed closed. Read back from the cache, the check is correct ("left 2026-10"). Real lesson: a cold live run escalates what it should block, so always warm the cache.
+- H4's pre-registered check expectation (CONTRADICTED) was wrong: three same-name people at the company, two in marketing, so UNVERIFIABLE is the designed answer.
+- 2.04 credits. Full write-up for the team in `docs/ISSUES.md`.
+
 ### ~16:10: near-duplicate false alarm on sequential invoices (bug fix, from the SOP gatekeeper results)
 - Lesson from our earlier gatekeeper research (`Desktop/SOP/gatekeeper`): measure over-refusal ("valid sent to a person"), not just missed fraud, and test near-misses. "Extract-then-code leaks near-misses."
 - Tested `near_duplicate_invoice` on near-misses. In the standard Indian format `INV/2026-27/NNNN`, the vendor's **next** bill scored 90-95 against the last one (`0042` vs `0043`, `0142`, `0024`), so every next invoice would have escalated (E4).

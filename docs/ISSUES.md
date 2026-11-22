@@ -24,6 +24,20 @@ Append only. Each entry: the file, the owner, the failing test or command, and t
 
 ## checks
 
+- **~16:30, from Lavya (checks), for Krishna (README) and Sibayan (eval): held-out company result.** One fresh real company nobody had used to build or tune the checks: **Asian Paints** (Crustdata id 414, `asianpaints.com`).
+  - **Method:** cases and expected results were written down before any call. Code was frozen at `84ce2d8`, the run happened once, and nothing was tuned afterwards. People were found live (the current CFO; a finance employee who left 2026-10). Bank-change requests with given claims (no model extraction), as in the private Bata cases. 2.04 credits. No names in git.
+
+    | Case | Expected | Got | Result |
+    |---|---|---|---|
+    | H1: current CFO, real domain, real title | ESCALATE (E1) | ESCALATE E1, E3; role VERIFIED | pass |
+    | H2: same CFO from `asianpalnts.com` (1 letter changed) | BLOCK (B2) | BLOCK B2; lookalike CONTRADICTED, *strong* | pass |
+    | H3: finance employee who left 2026-10, real domain, old title | BLOCK (B3) | **ESCALATE E1, E3, E6**; requester checks UNVERIFIABLE | **fail** |
+    | H4: current CFO claiming "Head of Marketing" | ESCALATE, role CONTRADICTED | ESCALATE E1, E3, E6; role UNVERIFIABLE | verdict pass, check expectation wrong |
+
+  - **Why H3 failed (diagnosed from the call log, not re-scored): the 5-per-minute rate limit on a cold cache.** The run's first five search/identify calls used up the minute. H3's person search waited about 50 s for a slot, `run_all`'s 20 s deadline expired, and the requester checks failed closed (UNVERIFIABLE → E6). The search then finished in the background; read back from the cache, the check says "left 2026-10" (CONTRADICTED). So the logic generalises, but **a cold live run under the rate limit escalates what it should block.** It is a safe failure (no wrongful approval), and it is exactly the risk in my integration note. For the demo: always run `python scripts/warm_cache.py` first.
+  - **Why H4's check expectation was wrong:** three people with the CFO's name have worked at Asian Paints, two in marketing roles. "Head of Marketing" really doesn't say which one sent it, so UNVERIFIABLE (not CONTRADICTED) is the designed, honest answer. The verdict matched.
+  - **Suggested README line:** "On a held-out company never used for tuning (pre-registered, run once): 3 of 4 verdicts as expected; the fourth escalated instead of blocking because the free-tier rate limit timed out a live check, a fail-closed outcome." A fix (rate-limit waits not counting against the 20 s deadline) would need *another* fresh company to test, by the same rule.
+
 - **~16:20, from Lavya, for Krishna and Sibayan: three suggestions from our earlier guard research ("Small Gatekeepers").** That project measured an LLM policy gate (ALLOW/BLOCK/ESCALATE) on thousands of complaints. Its best design, "V1", is ours: a model only names the claim, code applies the policy, and disagreement goes to a person. On 807 fresh real disputes it cut wrongful approvals from 22.1% to 10.5% (a model deciding alone) with no tone penalty. Three of its lessons fit here; none blocks the freeze.
   1. **For Sibayan (eval): report the gatekeeper metrics, not just "N/N cases pass".** Its pass/fail table had three numbers:
      - **tone penalty**: how often the decision flips between a calm and a pushy version of the same request;
