@@ -10,7 +10,6 @@
 | Each module works on its own, offline tests pass | 15:15 | core ✅ · checks ✅ · pay ✅ |
 | One request end to end (case 1 → payout) | 15:30 | ✅ with Ayush's real store, ledger and executor (mock payouts); checks still mocked |
 | All 10 cases pass with `scripts/run_demo.py` | 16:30 | ✅ 17/17 offline; ✅ 14/14 with live Gemini extraction (`--live-llm`); baseline guard 6/14. Live Crustdata checks on private Bata cases: next |
-| (old row) | | ✅ offline (13/13 incl. variants); live run needs verifiers and an `ANTHROPIC_API_KEY` |
 | Feature freeze | 17:15 | |
 | Repo public and submitted | 17:45 | |
 
