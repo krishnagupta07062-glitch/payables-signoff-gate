@@ -81,12 +81,12 @@ with st.sidebar:
             st.success(f"Seeded: {dev_seed.seed() or 'already present'}")
             st.rerun()
 
-tab_inbox, tab_ledger, tab_payouts = st.tabs(["Inbox", "Ledger", "Payouts"])
+tab_run, tab_inbox, tab_ledger, tab_payouts = st.tabs(["Run a request", "Inbox", "Ledger", "Payouts"])
 
 
 # --------------------------------------------------------------------------------------- inbox
 
-def decision_card(request_id: str) -> None:
+def decision_card(request_id: str, where: str = "inbox") -> None:
     row = store.get_decision_row(request_id)
     if not row:
         st.warning("Decision not found.")
@@ -160,21 +160,21 @@ def decision_card(request_id: str) -> None:
                 + (f": {a['note']}" if a["note"] else ""))
 
     if row["state"] == store.ESCALATED:
-        note = st.text_input("Note (e.g. call-back done on the number on file)", key=f"note-{request_id}")
+        note = st.text_input("Note (e.g. call-back done on the number on file)", key=f"{where}-note-{request_id}")
         a_col, r_col, _ = st.columns([1, 1, 4])
-        if a_col.button("✅ Approve", key=f"approve-{request_id}", type="primary"):
+        if a_col.button("✅ Approve", key=f"{where}-approve-{request_id}", type="primary"):
             if store.record_approval(request_id, approver, True, note):
                 res = worker.pay_approved(request_id, approver)
                 st.session_state["flash"] = f"Approved. Payment: {res}"
             else:
                 st.session_state["flash"] = "Already decided (double click ignored)."
             st.rerun()
-        if r_col.button("❌ Reject", key=f"reject-{request_id}"):
+        if r_col.button("❌ Reject", key=f"{where}-reject-{request_id}"):
             ok = store.record_approval(request_id, approver, False, note)
             st.session_state["flash"] = "Rejected." if ok else "Already decided (double click ignored)."
             st.rerun()
     elif row["state"] == store.APPROVED and action:
-        if st.button("Retry payment", key=f"retry-{request_id}"):
+        if st.button("Retry payment", key=f"{where}-retry-{request_id}"):
             st.session_state["flash"] = f"Payment: {worker.pay_approved(request_id, approver)}"
             st.rerun()
 
@@ -203,6 +203,85 @@ with tab_inbox:
         with right:
             sel = st.session_state.get("selected") or (pending[0]["request_id"] if pending else decisions[0]["request_id"])
             decision_card(sel)
+
+
+# -------------------------------------------------------------------------------- run a request
+
+def _case_files() -> list[Path]:
+    try:
+        from gate import pipeline
+        return pipeline.all_case_files()
+    except Exception:  # pipeline missing or broken: show nothing rather than crash the UI
+        return []
+
+
+def _load_vendor_master() -> None:
+    for p in (ROOT / "fixtures" / "vendors.json", ROOT / "fixtures" / "private" / "vendors.json"):
+        if p.exists():
+            store.load_fixtures(str(p))
+
+
+with tab_run:
+    files = _case_files()
+    if not files:
+        st.info("No request fixtures found (fixtures/requests/), or the pipeline is not importable.")
+    else:
+        labels = {f"{'🔒 ' if 'private' in f.parts else ''}{f.stem}": f for f in files}
+        c1, c2 = st.columns([3, 2])
+        choice = c1.selectbox("Request", list(labels))
+        case = json.loads(labels[choice].read_text(encoding="utf-8"))
+        c1.caption(f"Case {case.get('case')}: {case.get('title', '')} · expected **{case.get('expected_verdict')}** "
+                   f"{case.get('expected_rules', '')}")
+        credits_cap = c2.number_input("Run credit ceiling", min_value=0.0, max_value=100.0, value=10.0, step=1.0)
+        crash = c2.toggle("Simulate crash mid-payout", help="Pays in a child process that dies right after the "
+                          "outbox 'unknown' write. Then press Resume to finish it exactly once.")
+        with st.expander("Raw request (untrusted)"):
+            req = case.get("request", {})
+            st.text(f"From: {req.get('sender_display') or ''} <{req.get('sender_email') or ''}>")
+            st.text(req.get("raw_text", ""))
+        if st.button("▶ Run the gate", type="primary"):
+            from gate import pipeline
+            from gate.runbudget import RunBudget
+            _load_vendor_master()
+            budget = RunBudget(max_credits=credits_cap)
+            with st.spinner("extract → verify → decide…"):
+                _, res = pipeline.run_case(labels[choice], budget, execute=not crash)
+            store.record_calls(budget)
+            st.session_state["last_run"] = {"request_id": res.decision.request_id, "trace": res.trace,
+                                            "payout": res.payout, "budget": res.budget,
+                                            "expected": case.get("expected_verdict")}
+            if crash and res.decision.verdict.value == "ALLOW" and res.decision.action:
+                st.session_state["last_run"]["crash"] = worker.pay_with_crash(res.decision.request_id)
+            st.session_state["selected"] = res.decision.request_id
+        last = st.session_state.get("last_run")
+        if last:
+            row = store.get_decision_row(last["request_id"])
+            got = row["verdict"] if row else "?"
+            st.markdown(f"Expected **{last['expected']}**, gate says {badge(got)} "
+                        f"{'✔' if got == last['expected'] else '✘ mismatch'} · credits {last['budget'].get('credits')}"
+                        f" · {last['budget'].get('calls')} calls ({last['budget'].get('cached_calls')} cached) · "
+                        f"{last['budget'].get('seconds')}s", unsafe_allow_html=True)
+            with st.expander("Trace", expanded=False):
+                for t in last["trace"]:
+                    st.text(t)
+            if last.get("payout"):
+                p = last["payout"]
+                st.success(f"Payout {p.get('payout_id')} · {p.get('status')}"
+                           + (" · replayed, not paid twice" if p.get("replayed") else ""))
+            if last.get("crash"):
+                cr = last["crash"]
+                st.error(f"💥 Payer crashed (exit {cr['returncode']}). Outbox row is **{cr['outbox_state']}**: "
+                         f"the intent is saved and the provider may or may not have the payout.")
+                if st.button("♻ Resume", type="primary"):
+                    out = executor.resume()
+                    n = len([p for p in store.list_payouts() if p["idempotency_key"] == cr["idempotency_key"]])
+                    last["crash"] = None
+                    st.session_state["flash_run"] = f"Resumed: {out or 'nothing pending'} · payouts for this invoice: {n}"
+                    st.rerun()
+            if st.session_state.get("flash_run"):
+                st.success(st.session_state.pop("flash_run"))
+            st.divider()
+            decision_card(last["request_id"], where="run")
 
 
 # -------------------------------------------------------------------------------------- ledger

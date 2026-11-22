@@ -84,3 +84,21 @@ Newest entries go at the bottom. Each entry lists what changed, how it was teste
   - Ledger verify: OK.
 - Full suite: **78 passed** offline.
 - Note for Krishna: the pipeline appends its own `request` / `decision` ledger events, and the store also appends them inside the write transaction, so each request shows up twice in the ledger. That's harmless, but the pipeline's `_ledger` calls can be dropped.
+
+---
+
+## 22 Nov 2026, ~14:10 IST: Stage 2 (Integration), started early because the pipeline was ready
+
+- New **"Run a request"** tab (first tab) in `app/approvals.py`:
+  - lists every file in `fixtures/requests/` and `fixtures/private/requests/` (private ones marked 🔒);
+  - shows the case title, expected verdict, and the raw request in an "untrusted" expander;
+  - has a run credit ceiling (number input) → `RunBudget`;
+  - "▶ Run the gate" loads the vendor master into the store (`fixtures/vendors.json` + private), calls `gate.pipeline.run_case`, mirrors the budget's calls into the `calls` table (sidebar credits panel), and shows expected vs actual, the trace, the payout and the live decision card.
+- **Simulate crash** toggle: the pipeline runs with `execute=False`, then `app.worker.pay_with_crash()` pays in a **child process** that `os._exit()`s right after the outbox `unknown` write (Streamlit stays alive). The UI shows "Payer crashed, outbox row is unknown". **♻ Resume** calls `executor.resume()` and shows the payout count for that invoice (1).
+- An escalated request can be approved from the run card or the Inbox: approval → `worker.pay_approved` → receipt → execute → payout, then the Payouts tab updates.
+- `tests/pay/test_ui.py`: new headless test that runs case 01 with the crash on, checks for 0 provider payouts and an `unknown` outbox row, presses Resume (→ exactly 1 payout), then re-runs without a crash (replayed, still 1).
+- Full suite: **79 passed** offline.
+
+### Not done / blocked
+- **RazorpayX test mode:** no `.env` and no `RAZORPAY_KEY_ID/SECRET` on this machine, so the live test-mode run of case 1 is not done. The code path exists (`PAYMENTS_MODE=test`). To finish it: put the test keys and `RAZORPAYX_ACCOUNT_NUMBER` in `.env`, set `PAYMENTS_MODE=test`, run case 1 from the UI, and use Payouts → Refresh status (test payouts stay `processing` until moved in the dashboard).
+- **For the Stage 3 demo:** case 5 (genuine bank change) has no `PaymentAction`. Approving it records the approval, but there's nothing to pay yet ("approved, no payment action"). "Approved by a person, payout follows" needs an invoice to the new account after approval. Ask Krishna whether a fixture should carry that.
