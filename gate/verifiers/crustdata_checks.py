@@ -58,6 +58,24 @@ def _identify_domain(cd: Crustdata, domain: str, budget) -> tuple[CallResult, li
     return res, matches
 
 
+def _related(m: dict, vendor: Vendor, on_master: bool, d: str) -> Optional[str]:
+    """Is the company that owns `d` plausibly the vendor under another name (rebrand, parent, subsidiary)?
+
+    Crustdata keeps a rebranded or parent company as a separate record with no link field (Zomato 6162764 and
+    Eternal 6775477; Bata India 573 and Bata Group 1135086), but acquired and related brands often list each
+    other's domains. So: the domain is on our vendor master, or the owning record lists one of the vendor's
+    domains. Then we flag it for a person (UNVERIFIABLE) instead of calling it a different company.
+    Returns the note, or None if unrelated.
+    """
+    shared = sorted(set(m["all_domains"]) & {x.lower() for x in vendor.domains})
+    if not (on_master or shared):
+        return None
+    why = (f"{d} is on the vendor master" if on_master else f"its Crustdata record also lists {', '.join(shared)}")
+    return (f"{d} belongs to {m['name']} (Crustdata id {m['id']}), a separate record from {vendor.legal_name}"
+            f"{' (id ' + str(vendor.crustdata_company_id) + ')' if vendor.crustdata_company_id else ''}, but {why}. "
+            "Possibly the same company under another name (rebrand, parent or subsidiary); confirm by hand.")
+
+
 def sender_domain_matches_vendor(request: Request, vendor: Vendor, budget: Optional[RunBudget] = None,
                                  cd: Optional[Crustdata] = None) -> Check:
     name = "sender_domain_matches_vendor"
@@ -87,19 +105,20 @@ def sender_domain_matches_vendor(request: Request, vendor: Vendor, budget: Optio
         if owning:
             m = owning[0]
             srcs.insert(0, _src(res, m["id"], excerpt=f"{m['name']}: all_domains {m['all_domains'][:6]}"))
-            if on_master:
-                return unverifiable(name, f"{d} is on the vendor master, but Crustdata says it belongs to "
-                                          f"{m['name']} (id {m['id']}), not vendor id {vendor.crustdata_company_id}. "
-                                          "Possible rebrand or parent/subsidiary; confirm by hand.",
-                                    srcs, {"domain": d, "crustdata_company_id": m["id"]}, res.credits)
+            related = _related(m, vendor, on_master, d)
+            if related:
+                return unverifiable(name, related, srcs, {"domain": d, "crustdata_company_id": m["id"]}, res.credits)
             return check(name, C, f"{d} belongs to {m['name']} (Crustdata id {m['id']}), not to {vendor.legal_name}.",
                          {"domain": d, "crustdata_company_id": m["id"]}, srcs, res.credits)
     elif owning:
         m = owning[0]
         srcs.insert(0, _src(res, m["id"], excerpt=f"{m['name']}: all_domains {m['all_domains'][:6]}"))
-        if on_master or fuzz.token_set_ratio(norm_company(m["name"]), norm_company(vendor.legal_name)) >= 90:
+        if fuzz.token_set_ratio(norm_company(m["name"]), norm_company(vendor.legal_name)) >= 90:
             return check(name, V, f"{d} belongs to {m['name']} (Crustdata id {m['id']}).",
                          {"domain": d, "crustdata_company_id": m["id"]}, srcs, res.credits)
+        related = _related(m, vendor, on_master, d)
+        if related:
+            return unverifiable(name, related, srcs, {"domain": d, "crustdata_company_id": m["id"]}, res.credits)
         return check(name, C, f"{d} belongs to {m['name']}, not to {vendor.legal_name}.",
                      {"domain": d, "crustdata_company_id": m["id"]}, srcs, res.credits)
     # no Crustdata record owns this domain

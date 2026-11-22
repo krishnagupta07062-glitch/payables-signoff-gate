@@ -15,11 +15,26 @@ Newest entries at the top.
 | `run_all()` (parallel, shared 20 s deadline, never raises) | `__init__.py` | ✅ done |
 | `scripts/warm_cache.py` | `scripts/warm_cache.py` | ✅ done; run once without a Crustdata key, 0-credit second run tested |
 | Live run against real Crustdata / RDAP / IFSC | | ⏳ needs `.env` with Lavya's key |
+| Same-name requester matching (case 12) | `crustdata_checks.py` | ✅ done, live-verified |
+| Rebrand / parent-company domains flagged, not contradicted | `crustdata_checks.py` | ✅ done, live-verified on `bata.com` |
+| Polish prompt (Lavya 3) edge cases | | ✅ all five covered |
 | `vendor_news` | | ✂️ cut (first item in the team's cut list) |
 
 Tests: `tests/verifiers/` has 39 tests. Full suite: 96 passed, offline.
 
 ## Log
+
+### ~15:45: polish prompt (Lavya 3) done
+Each of the five edge cases, with its test:
+1. **Unknown small vendor** → `requester_current_role` UNVERIFIABLE, "call back on the number on file". Already done; `test_requester_small_vendor_unlinked`, `test_requester_not_found_says_call_back`.
+2. **Crustdata 429 and a timeout in the middle of `run_all`.** New `test_run_all_429_and_timeout_mid_run`: identify is rate-limited (1 try + 3 retries, then gives up) and person search times out. The three Crustdata checks fail closed (UNVERIFIABLE, naming the cause), while RDAP, IFSC and lookalike still give real answers. Nothing raises.
+3. **Expired domain that Crustdata still calls active** → CONTRADICTED. Already done; `test_vendor_index_active_but_domain_expired`.
+4. **Same company under two names (Zomato/Eternal, Bata India/Bata Group).** New `_related()`: if the domain belongs to another Crustdata record but is on our vendor master, or that record lists one of the vendor's domains, the result is UNVERIFIABLE with "possibly the same company under another name (rebrand, parent or subsidiary); confirm by hand". It is not CONTRADICTED. Unrelated companies are still CONTRADICTED. Also fixed: a vendor with no Crustdata id no longer gets VERIFIED just because the domain is on the master while Crustdata names a different company. 3 new tests; live `bata.com` → UNVERIFIABLE "Bata Group ... separate record from Bata India".
+5. **Hindi dates in web results:** not applicable. No check uses `/web/search/live` (where dates are localised); `vendor_active` uses `/web/enrich/live`, which returns a numeric timestamp and an HTTP status.
+
+- Deleted `cache/` and ran `warm_cache.py` twice: **0.89 credits cold, 0.00 warm.** Private cases 11-13 still BLOCK / BLOCK / ESCALATE.
+- Tests: 147 passed.
+- From 17:15 (feature freeze): bug fixes only, as Krishna or Ayush report them.
 
 ### ~15:25: same-name fix (Krishna's case 12 bug), private cases, warm_cache defaults
 - Pulled main and read `docs/ISSUES.md`. Two items were addressed to Lavya: the same-name bug (top) and `warm_cache.py` defaulting to the private cases.

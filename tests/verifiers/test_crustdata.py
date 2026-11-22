@@ -95,6 +95,28 @@ def test_domain_on_master_but_not_in_crustdata(live, vendor, budget):
     assert cdc.sender_domain_matches_vendor(_req("ap@acmeleaf.in"), vendor, budget).status == U
 
 
+def test_parent_domain_on_master_is_flagged_not_contradicted(live, vendor, budget):
+    # real case: bata.com is on Bata India's master, but Crustdata files it under Bata Group (another record)
+    vendor.domains = ["acmeleaf.in", "acmeleafgroup.com"]
+    live({"/company/identify": (200, OK, identify_resp("acmeleafgroup.com", cid=77, name="Acmeleaf Group"))})
+    c = cdc.sender_domain_matches_vendor(_req("ap@acmeleafgroup.com"), vendor, budget)
+    assert c.status == U and "same company under another name" in c.note and c.value["crustdata_company_id"] == 77
+
+
+def test_rebrand_sharing_a_domain_is_flagged_not_contradicted(live, vendor, budget):
+    # Zomato/Eternal style: the new name isn't on our master, but its record lists the vendor's old domain
+    live({"/company/identify": (200, OK, identify_resp("eternleaf.com", cid=88, name="Eternleaf Ltd",
+                                                       all_domains=["eternleaf.com", "acmeleaf.in"]))})
+    c = cdc.sender_domain_matches_vendor(_req("ap@eternleaf.com"), vendor, budget)
+    assert c.status == U and "also lists acmeleaf.in" in c.note and "rebrand" in c.note
+
+
+def test_unrelated_company_domain_is_contradicted(live, vendor, budget):
+    live({"/company/identify": (200, OK, identify_resp("other.com", cid=5, name="Other Co",
+                                                       all_domains=["other.com", "other.in"]))})
+    assert cdc.sender_domain_matches_vendor(_req("ap@other.com"), vendor, budget).status == C
+
+
 # ------------------------------------------------------------------ requester
 
 AT_VENDOR = {"name": "Acmeleaf", "title": "Chief Financial Officer", "start_date": "2024-01-01T00:00:00",

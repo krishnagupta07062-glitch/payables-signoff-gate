@@ -47,6 +47,30 @@ def test_run_all_timeout_is_unverifiable(invoice_request, invoice_claims, vendor
     assert va.status == U and "timed out" in va.note
 
 
+def test_run_all_429_and_timeout_mid_run(vendor, budget, live, http, monkeypatch):
+    """Crustdata rate-limits identify and times out on person search while the free sources answer:
+    the Crustdata checks fail closed, everything else still gets a real answer, nothing raises."""
+    monkeypatch.setattr(time, "sleep", lambda s: None)  # skip the 429 backoff
+
+    def timeout():
+        raise TimeoutError("read timed out")
+    t, _ = live({"/company/identify": (429, {}, {}), "/person/search": timeout})
+    http({"rdap": (200, {"events": [{"eventAction": "registration", "eventDate": "2015-01-01T00:00:00Z"}]}),
+          "ifsc.razorpay.com": (200, {"BANK": "HDFC Bank", "BRANCH": "X", "CITY": "Pune"})})
+    r = Request(request_id="R4", kind=RequestKind.BANK_CHANGE, raw_text="", sender_email="riya@acmeleaf.in")
+    cl = Claims(requester_name="Riya Synthetic", requester_role="CFO", requested_change="bank_change",
+                pay_to_account="999988887777", pay_to_ifsc="HDFC0CAGSBK", pay_to_holder="Acmeleaf Tanners Pvt Ltd")
+    by = {c.name: c for c in verifiers.run_all(r, cl, vendor, [], budget)}
+    for n in ("sender_domain_matches_vendor", "requester_current_role", "requester_departed"):
+        assert by[n].status == U, n
+    assert "429" in by["sender_domain_matches_vendor"].note or "rate" in by["sender_domain_matches_vendor"].note.lower()
+    assert "timed out" in by["requester_current_role"].note.lower() or "Timeout" in by["requester_current_role"].note
+    assert by["domain_age_days"].status == CheckStatus.VERIFIED
+    assert by["ifsc_valid"].status == CheckStatus.VERIFIED
+    assert by["sender_domain_lookalike"].status == CheckStatus.VERIFIED
+    assert len([p for p, _ in t.calls if p == "/company/identify"]) == 4  # 1 try + 3 retries, then gave up
+
+
 def test_run_all_garbage_input_never_raises(vendor, budget):
     r = Request(request_id="R3", kind="email", raw_text="", sender_email="not-an-email")
     out = verifiers.run_all(r, Claims(invoice_number="???", amount_inr=-1), vendor, None, budget)
