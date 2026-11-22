@@ -1,13 +1,13 @@
 # Build status
 
-*Krishna's Claude session updates this file as teammates push. Last update: 14:40 IST.*
+*Krishna's Claude session updates this file as teammates push. Last update: 15:20 IST.*
 
 ## Checkpoints
 
 | Checkpoint | Target | State |
 |---|---|---|
 | Skeleton, contracts and prompts pushed | 14:00 | ✅ 13:43 |
-| Each module works on its own, offline tests pass | 15:15 | core ✅ · checks ⏳ · pay ✅ |
+| Each module works on its own, offline tests pass | 15:15 | core ✅ · checks ✅ · pay ✅ |
 | One request end to end (case 1 → payout) | 15:30 | ✅ with Ayush's real store, ledger and executor (mock payouts); checks still mocked |
 | All 10 cases pass with `scripts/run_demo.py` | 16:30 | ✅ offline (13/13 incl. variants); live run needs verifiers and an `ANTHROPIC_API_KEY` |
 | Feature freeze | 17:15 | |
@@ -31,14 +31,15 @@
 
 ## Checks (Lavya)
 
-Waiting for first push. Expected: `gate/verifiers/{crustdata_client,crustdata_checks,india_checks,history_checks}.py`, `run_all`.
+✅ Pushed: Crustdata client (cache, limiter, budget), Crustdata checks, India checks (GSTIN, IFSC, RDAP, lookalike), history checks, `run_all`; 129 tests pass together. Decided her two questions in ISSUES.md (lookalike strong=BLOCK / weak=E10; live demo uses the private Bata cases).
 
 ## Payments and UI (Ayush)
 
 ✅ Pushed 14:30: SQLite store (WAL), hash-chained ledger with UPDATE/DELETE triggers, mock + RazorpayX test-mode payouts, exactly-once executor (signed single-use receipts, outbox, resume), crash tests, Streamlit inbox/ledger/payouts. 78 tests pass with core.
 - Pipeline now uses the real store; the duplicate ledger writes Ayush flagged are removed (the store writes them).
 - `run_demo.py` uses a fresh `runs/demo-HHMMSS.sqlite` per run unless `GATE_DB` is set, so a re-run never sees its own earlier payments as duplicates.
-- Next for Ayush: wire the UI's "Run a request" panel to `gate.pipeline.run_case`.
+- ✅ UI wired to the pipeline (Run-a-request, simulate crash, Resume). ✅ RazorpayX **test mode verified live**: real test payout, replay gives the same payout, provider rejects a changed body, crash + reconcile adopts the payout.
+- Case 5b added for him (approve → payout). Next: Stage 3 (Demo tab, export report, demo script, video ~17:15).
 
 ## How the fixtures plug in (for Lavya and Ayush)
 

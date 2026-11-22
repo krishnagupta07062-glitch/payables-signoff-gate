@@ -33,11 +33,8 @@ def judge(request: Request, vendor: Optional[Vendor], budget: RunBudget) -> dict
     from gate import llm_gemini
     known0 = f"Known vendor on file: {vendor.legal_name} (domains: {', '.join(vendor.domains)})" if vendor else ""
     if llm_gemini.provider() == "gemini":
-        out, err = llm_gemini.generate_json(SYSTEM, f"{known0}
-From: {request.sender_display or ''} <{request.sender_email or ''}>"
-                                            f"
-
-{request.raw_text}", SCHEMA, budget, "baseline")
+        user = f"{known0}\nFrom: {request.sender_display or ''} <{request.sender_email or ''}>\n\n{request.raw_text}"
+        out, err = llm_gemini.generate_json(SYSTEM, user, SCHEMA, budget, "baseline")
         if out is None:
             return {"verdict": None, "reason": f"baseline unavailable: {err}"}
         v = out.get("verdict")

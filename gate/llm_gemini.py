@@ -14,6 +14,9 @@ from gate.runbudget import RunBudget
 
 API = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 DEFAULT_MODEL = "gemini-3.5-flash-lite"
+# tried in order when the chosen model is overloaded (503) or out of free quota (429)
+FALLBACK_MODELS = ("gemini-3.1-flash-lite", "gemini-2.5-flash-lite", "gemini-flash-lite-latest")
+RETRY_STATUS = (429, 500, 503)
 
 
 def provider() -> str:
@@ -24,9 +27,18 @@ def model() -> str:
     return os.environ.get("GEMINI_MODEL") or DEFAULT_MODEL
 
 
-def _post(body: dict, key: str, timeout: float):
+def models_to_try() -> list[str]:
+    extra = [m.strip() for m in (os.environ.get("GEMINI_FALLBACK_MODELS") or ",".join(FALLBACK_MODELS)).split(",")]
+    out = []
+    for m in [model(), *extra]:
+        if m and m not in out:
+            out.append(m)
+    return out
+
+
+def _post(body: dict, key: str, timeout: float, model_name: Optional[str] = None):
     import requests
-    return requests.post(API.format(model=model()), json=body, timeout=timeout,
+    return requests.post(API.format(model=model_name or model()), json=body, timeout=timeout,
                          headers={"x-goog-api-key": key, "Content-Type": "application/json"})
 
 
@@ -62,13 +74,23 @@ def generate_json(system: str, user: str, schema: dict, budget: RunBudget, label
     body = {"systemInstruction": {"parts": [{"text": system}]},
             "contents": [{"role": "user", "parts": [{"text": user}]}],
             "generationConfig": dict(cfg, responseJsonSchema=schema)}
+    import time
+    r, used = None, model()
     try:
-        r = _post(body, key, timeout)
-        if r.status_code == 400 and "responseJsonSchema" in r.text:
-            # older models: plain JSON mode, schema given in the prompt; validation still applies
-            body["generationConfig"] = cfg
-            body["contents"][0]["parts"][0]["text"] = f"{user}\n\nReturn one JSON object matching this JSON Schema:\n{json.dumps(schema)}"
-            r = _post(body, key, timeout)
+        for used in models_to_try():
+            for attempt in range(2):
+                r = _post(body, key, timeout, used)
+                if r.status_code == 400 and "responseJsonSchema" in r.text and "responseJsonSchema" in body["generationConfig"]:
+                    # older models: plain JSON mode, schema given in the prompt; validation still applies
+                    body["generationConfig"] = cfg
+                    body["contents"][0]["parts"][0]["text"] = (
+                        f"{user}\n\nReturn one JSON object matching this JSON Schema:\n{json.dumps(schema)}")
+                    r = _post(body, key, timeout, used)
+                if r.status_code not in RETRY_STATUS:
+                    break
+                time.sleep(2 + 3 * attempt)
+            if r.status_code not in RETRY_STATUS:
+                break
     except Exception as e:  # network, timeout
         budget.charge("gemini", label, 0.0, note=f"error: {type(e).__name__}")
         return None, f"{type(e).__name__}"
@@ -81,6 +103,6 @@ def generate_json(system: str, user: str, schema: dict, budget: RunBudget, label
         budget.charge("gemini", label, 0.0, note=f"error: HTTP {r.status_code}")
         return None, f"HTTP {r.status_code}: {msg}"
     u = j.get("usageMetadata") or {}
-    budget.charge("gemini", f"{label}:{model()}", 0.0, request_id=j.get("responseId"),
+    budget.charge("gemini", f"{label}:{used}", 0.0, request_id=j.get("responseId"),
                   tokens_in=u.get("promptTokenCount"), tokens_out=u.get("candidatesTokenCount"), note="usd=0 (free tier)")
     return parse_response(j)

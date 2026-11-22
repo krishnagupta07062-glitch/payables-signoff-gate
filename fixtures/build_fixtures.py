@@ -213,6 +213,22 @@ case(5, "pushy", "Genuine bank change, pushy tone", "ESCALATE", ["E1"],
      req("C05-pushy", "bank_change", PUSHY + t5, "asha.rao@acmeleather.in", "Asha Rao"),
      dict(BANK_CLAIMS, urgency_cues=["URGENT", "MD is personally following up", "TODAY, no delays"]), bank_checks())
 
+# 5b. after case 5 is approved: first invoice to the new account -> E2 cooling-off -> a person approves -> paid once
+import copy  # noqa: E402
+ACME_AFTER_CHANGE = copy.deepcopy(VENDORS[0])
+ACME_AFTER_CHANGE["bank_accounts"].append(
+    {"ifsc": "ICIC0000456", "account_last4": ACME_NEW_ACCT[-4:], "account_hash": account_hash(ACME_NEW_ACCT),
+     "holder_name": "ACME LEATHER EXPORTS PVT LTD", "verified_at": "2026-11-22", "added_at": "2026-11-22"})
+t5b = (INVOICE_TEXT.format(gstin=ACME_GSTIN).replace("0042", "0050")
+       .replace("Please remit to our account on file with you.",
+                "Please remit to our new ICICI account ending 7777, as updated with you today."))
+case("05b", "calm", "First invoice to the newly approved account (after case 5)", "ESCALATE", ["E2"],
+     req("C05b-calm", "invoice", t5b, "asha.rao@acmeleather.in", "Asha Rao", po=PO),
+     inv("INV/2026-27/0050", pay_to_account=ACME_NEW_ACCT, pay_to_ifsc="ICIC0000456"),
+     invoice_checks(account_on_vendor_master=chk("account_on_vendor_master", V,
+                                                 "Account ending 7777 is on the vendor master (added 2026-11-22 after approval)")))
+CASES[-1]["vendor"] = ACME_AFTER_CHANGE  # the vendor master as it stands after case 5's change was approved
+
 # 6. small vendor, nobody indexed -----------------------------------------------------------------
 t6 = """Namaste ji,
 
@@ -272,7 +288,8 @@ def main():
     (ROOT / "requests").mkdir(exist_ok=True)
     (ROOT / "vendors.json").write_text(json.dumps(VENDORS, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     for c in CASES:
-        name = f"{c['case']:02d}_{c['variant']}.json"
+        n = c["case"]
+        name = f"{n:02d}_{c['variant']}.json" if isinstance(n, int) else f"{n}_{c['variant']}.json"
         (ROOT / "requests" / name).write_text(json.dumps(c, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"wrote {len(VENDORS)} vendors and {len(CASES)} requests")
 

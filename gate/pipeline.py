@@ -204,6 +204,13 @@ def run(request: Request, budget: RunBudget, vendor: Optional[Vendor] = None,
 def run_case(path: Path, budget: Optional[RunBudget] = None, **kw) -> tuple[dict, RunResult]:
     case = load_case(path)
     request = request_from_dict(case["request"])
+    if case.get("vendor") and "vendor" not in kw:  # a case may carry the vendor master as it stands at that point
+        kw["vendor"] = vendor_from_dict(case["vendor"])
+        try:
+            from gate import store
+            store.upsert_vendor(kw["vendor"])
+        except Exception:
+            pass
     res = run(request, budget or RunBudget(max_credits=10), mock_claims=case.get("mock_claims"),
               mock_checks=case.get("mock_checks"), **kw)
     return case, res

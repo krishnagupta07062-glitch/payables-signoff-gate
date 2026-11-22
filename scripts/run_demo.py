@@ -41,7 +41,7 @@ def main() -> int:
     budget = RunBudget(max_credits=a.credits, max_seconds=1800)
     rows, failures = [], 0
     for path in all_case_files():
-        case_no = int(path.name.split("_")[0]) if path.name[:2].isdigit() else 0
+        case_no = int(path.name[:2]) if path.name[:2].isdigit() else 0
         if a.case and case_no != a.case:
             continue
         case, res = run_case(path, budget, today=date(2026, 11, 23))

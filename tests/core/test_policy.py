@@ -166,3 +166,17 @@ def test_same_invoice_same_idempotency_key():
     a = run(inv_request(), invoice_claims(invoice_number="INV-0042"), clean_invoice_checks())
     b = run(inv_request(), invoice_claims(invoice_number="42"), clean_invoice_checks())
     assert a.action.idempotency_key == b.action.idempotency_key
+
+
+@pytest.mark.parametrize("reason,rule,verdict", [
+    ("1 character(s) from the vendor domain", "B2", Verdict.BLOCK),
+    ("punycode (internationalised) domain", "B2", Verdict.BLOCK),
+    ("same as the vendor domain after removing look-alike characters", "B2", Verdict.BLOCK),
+    ("same name under a different ending", "E10", Verdict.ESCALATE),
+    ("contains the vendor's name 'acme'", "E10", Verdict.ESCALATE),
+])
+def test_lookalike_strength(reason, rule, verdict):
+    checks = clean_invoice_checks()
+    checks.append(Check("sender_domain_lookalike", CheckStatus.CONTRADICTED, {"reason": reason}, note="imitates"))
+    d = run(inv_request(), invoice_claims(), checks)
+    assert d.verdict == verdict and rule in d.rule_ids

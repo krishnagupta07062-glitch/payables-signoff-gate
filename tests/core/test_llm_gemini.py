@@ -22,3 +22,17 @@ def test_extractor_fails_closed_without_key(monkeypatch):
     r = Request(request_id="t", kind=RequestKind.INVOICE, raw_text="Invoice 42, Rs 100")
     c = extractor.extract(r, RunBudget(max_credits=1))
     assert c.amount_inr is None and c.extraction_notes.startswith("extraction failed")
+
+
+def test_baseline_guard_imports_and_fails_soft(monkeypatch):
+    from gate import baseline_guard
+    monkeypatch.setenv("GATE_PROVIDER", "gemini")
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    r = Request(request_id="t", kind=RequestKind.INVOICE, raw_text="Invoice 42")
+    assert baseline_guard.judge(r, None, RunBudget(max_credits=1))["verdict"] is None
+
+
+def test_fallback_order(monkeypatch):
+    monkeypatch.setenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
+    monkeypatch.delenv("GEMINI_FALLBACK_MODELS", raising=False)
+    assert llm_gemini.models_to_try()[0] == "gemini-3.1-flash-lite" and len(set(llm_gemini.models_to_try())) == len(llm_gemini.models_to_try())

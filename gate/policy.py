@@ -34,6 +34,7 @@ RULES = {
     "E7": "Pay-to country differs from the vendor's country",
     "E8": "Amount above the vendor's payment limit",
     "E9": "A record contradicts the request",
+    "E10": "Sender domain resembles the vendor's name but is not a close imitation",
     "A1": "Everything checked out within policy",
 }
 
@@ -103,12 +104,26 @@ class _Ctx:
 
 # ----------------------------------------------------------------------------------------- rules
 
+WEAK_LOOKALIKE_REASONS = ("same name under a different ending", "contains the vendor's name")
+
+
+def _strong_lookalike(check) -> bool:
+    """Punycode, look-alike characters or 1-2 edits from the vendor domain: BLOCK. Weak signals escalate.
+    A lookalike check without a recognisable reason counts as strong (fail closed)."""
+    reason = str((check.value or {}).get("reason") or "")
+    return not any(reason.startswith(w) for w in WEAK_LOOKALIKE_REASONS)
+
+
 def _block_rules(x: _Ctx) -> None:
     if x.status("duplicate_invoice") == C:
         x.add("B1", f"{RULES['B1']}. {x.note('duplicate_invoice')}".strip(), "duplicate_invoice")
-    for name in ("sender_domain_lookalike", "domain_age_days"):
-        if x.status(name) == C:
-            x.add("B2", f"{RULES['B2']}. {x.note(name)}".strip(), name)
+    if x.status("domain_age_days") == C:
+        x.add("B2", f"{RULES['B2']}. {x.note('domain_age_days')}".strip(), "domain_age_days")
+    if x.status("sender_domain_lookalike") == C:
+        if _strong_lookalike(x.by_name["sender_domain_lookalike"]):
+            x.add("B2", f"{RULES['B2']}. {x.note('sender_domain_lookalike')}".strip(), "sender_domain_lookalike")
+        else:  # weak signal (same name, other ending; contains the name): could be a genuine sister domain
+            x.add("E10", f"{RULES['E10']}. {x.note('sender_domain_lookalike')}".strip(), "sender_domain_lookalike")
     if x.status("requester_departed") == C:
         x.add("B3", f"{RULES['B3']}. {x.note('requester_departed')}".strip(), "requester_departed")
     if x.status("account_shared_across_vendors") == C:
