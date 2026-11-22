@@ -35,5 +35,5 @@ Rules for shared files:
 ## Environment
 - Python 3.14. Install with `pip install -r requirements.txt`. Copy `.env.example` to `.env` and use your own `CRUSTDATA_API_KEY`.
 - Crustdata: base `https://api.crustdata.com`, headers `Authorization: Bearer <key>` and `x-api-version: 2025-11-01`. The rate limit is **5 requests per minute** on search, enrich and identify, so cache everything.
-- `GATE_MODEL` (default `claude-sonnet-5-5`) is used for extraction.
+- `GATE_MODEL` (default `claude-opus-5-5`, effort low) is used for extraction.
 - Reusable, tested code: `prototypes/engineering_snippets.py` (invoice normalisation, fingerprint, idempotency key, lookalike domains, RDAP domain age, hash-chained ledger) and `prototypes/crustdata_cached.py` (the cache pattern).
