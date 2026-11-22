@@ -1,0 +1,52 @@
+# Sign-Off Gate theme: warm cream canvas, near-black ink, one lime accent.
+# Component styling that the theme can't express lives in app/theme.py.
+
+[theme]
+base = "light"
+primaryColor = "#141414"              # ink: focus rings, selected controls; lime fills are set in app/theme.py
+backgroundColor = "#F4F2EE"           # warm cream canvas
+secondaryBackgroundColor = "#FFFFFF"  # inputs, dataframes, expanders sit on white
+textColor = "#141414"
+borderColor = "#E2DED6"
+showWidgetBorder = true
+linkColor = "#141414"
+linkUnderline = true
+codeTextColor = "#3A3833"
+codeBackgroundColor = "#ECE9E3"
+dataframeBorderColor = "#E8E4DD"
+dataframeHeaderBackgroundColor = "#FAF9F6"
+dataframeHeaderTextColor = "#6B6760"
+
+greenColor = "#2F7D3B"
+greenBackgroundColor = "#EEF5E6"
+greenTextColor = "#24602E"
+blueColor = "#141414"
+blueBackgroundColor = "#FFFFFF"
+blueTextColor = "#141414"
+yellowColor = "#C77800"
+yellowBackgroundColor = "#FDF1DC"
+yellowTextColor = "#8A5300"
+orangeColor = "#C77800"
+orangeBackgroundColor = "#FDF1DC"
+orangeTextColor = "#8A5300"
+redColor = "#D13B2A"
+redBackgroundColor = "#FBE9E6"
+redTextColor = "#A42A1C"
+grayColor = "#9A958C"
+grayTextColor = "#6B6760"
+
+font = "Geist:https://fonts.googleapis.com/css2?family=Geist:wght@300..700&display=swap"
+headingFont = "Geist:https://fonts.googleapis.com/css2?family=Geist:wght@300..700&display=swap"
+codeFont = "Geist Mono:https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400..600&display=swap"
+baseFontSize = 15
+baseFontWeight = 400
+headingFontWeights = [500, 500, 500, 600, 600, 600]
+headingFontSizes = ["2.75rem", "1.75rem", "1.25rem", "0.95rem", "0.85rem", "0.8rem"]
+codeFontSize = "0.82em"
+baseRadius = "12px"
+buttonRadius = "999px"
+
+[theme.sidebar]
+backgroundColor = "#EDEAE4"
+secondaryBackgroundColor = "#FFFFFF"
+borderColor = "#E2DED6"
