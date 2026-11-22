@@ -78,6 +78,19 @@ with st.sidebar:
             st.success(f"Seeded: {dev_seed.seed() or 'already present'}")
             st.rerun()
 
+# ----------------------------------------------------------------------------- humans / agents switch
+
+if "view" not in st.session_state:  # ?view=agents opens the agent view directly
+    st.session_state["view"] = "Agents" if str(st.query_params.get("view", "")).lower() == "agents" else "Humans"
+_, switch_col = st.columns([5, 2])
+view = switch_col.segmented_control("View", ["Humans", "Agents"], key="view", label_visibility="collapsed",
+                                    width="stretch") or "Humans"
+st.query_params["view"] = view.lower()
+if view == "Agents":
+    from app import agent_view
+    agent_view.render()
+    st.stop()
+
 tab_demo, tab_run, tab_inbox, tab_ledger, tab_payouts = st.tabs(["Demo", "Run a request", "Inbox", "Ledger", "Payouts"])
 
 

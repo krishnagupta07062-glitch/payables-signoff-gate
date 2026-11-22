@@ -49,3 +49,38 @@ def test_ui_run_case_crash_then_resume(db, monkeypatch):
     at.toggle[0].set_value(False).run()
     next(b for b in at.button if b.label.endswith("Run the gate")).click().run()
     assert len(razorpayx.mock_payouts()) == 1
+
+
+def test_agent_view_lists_everything_copyable(db):
+    dev_seed.seed()
+    at = st_testing.AppTest.from_file(APP, default_timeout=30)
+    at.session_state["view"] = "Agents"
+    at.run()
+    assert not at.exception
+    assert len(at.tabs) == 0                                   # the human tabs are not rendered
+    code = "\n".join(c.value for c in at.code)
+    for rid in ("DEMO-1-clean", "DEMO-3-lookalike", "DEMO-5-bankchange", "DEMO-6-unknown-requester"):
+        assert rid in code                                     # every decision is present as copyable text
+    assert '"ledger_ok": true' in code
+    assert any(b.label.startswith("Download full state") for b in at.get("download_button"))
+    # the agent view never changes state
+    assert store.get_decision_row("DEMO-5-bankchange")["state"] == store.ESCALATED
+
+
+def test_agent_view_query_param_and_switch_back(db):
+    dev_seed.seed()
+    at = st_testing.AppTest.from_file(APP, default_timeout=30)
+    at.query_params["view"] = "agents"
+    at.run()
+    assert not at.exception and len(at.tabs) == 0
+    at.session_state["view"] = "Humans"
+    at.run()
+    assert not at.exception and len(at.tabs) == 5
+
+
+def test_agent_view_empty_db(db):
+    at = st_testing.AppTest.from_file(APP, default_timeout=30)
+    at.session_state["view"] = "Agents"
+    at.run()
+    assert not at.exception
+    assert any("No decisions yet" in c.value for c in at.caption)
