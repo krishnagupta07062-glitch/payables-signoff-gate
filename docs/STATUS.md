@@ -9,7 +9,7 @@
 | Skeleton, contracts and prompts pushed | 14:00 | ✅ 13:43 |
 | Each module works on its own, offline tests pass | 15:15 | core ✅ · checks ✅ · pay ✅ |
 | One request end to end (case 1 → payout) | 15:30 | ✅ with Ayush's real store, ledger and executor (mock payouts); checks still mocked |
-| All 10 cases pass with `scripts/run_demo.py` | 16:30 | ✅ 17/17 offline; ✅ 14/14 with live Gemini extraction (`--live-llm`); baseline guard 6/14. Live Crustdata checks on private Bata cases: ✅ 3/3 (0.69 credits) |
+| All 10 cases pass with `scripts/run_demo.py` | 16:30 | ✅ 17/17 offline; ✅ 14/14 with live Gemini extraction (`--live-llm`); baseline guard 6/14. Live Crustdata checks on private Bata cases: ✅ 3/3 (0.69 credits). Held-out (Asian Paints, pre-registered, run once): 3/4, the miss was a rate-limit timeout that escalated instead of blocking (fail closed) |
 | Feature freeze | 17:15 | |
 | Repo public and submitted | 17:45 | |
 

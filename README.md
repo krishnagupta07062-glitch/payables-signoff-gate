@@ -86,7 +86,16 @@ The plain guard did catch the bank-change risk in general. What it can't do is c
 
 `python scripts/run_demo.py --live-checks --only-private` runs live Crustdata, RDAP, IFSC and GST checks on three private bank-change emails about **Bata India** (stored extraction, so no real names go to the model). All three come out right, for 0.69 credits: a lookalike domain naming the current CFO is BLOCKED; a finance head who left in October 2026 is BLOCKED (the index has two people with that name, and the reason says which one was matched and why); the real CFO on the real domain is ESCALATED for a callback.
 
-**Honesty note:** these three cases were used *during development* to fix the checks (same-name matching, bot-blocked sites), so they are development data, not a clean test. A held-out run on a fresh company nobody tuned against is reported in `docs/ISSUES.md` when it's done.
+**Honesty note:** these three cases were used *during development* to fix the checks (same-name matching, bot-blocked sites), so they are development data, not a clean test. **Held-out test, a company we never used for building or tuning:** **Asian Paints**. The cases and expected verdicts were written down before any call. The code was frozen, the test ran once, and nothing was tuned afterwards. It cost 2.04 credits.
+
+| Request | Expected | Gate |
+|---|---|---|
+| The current CFO, from the real domain | ESCALATE (callback) | ESCALATE ✓ |
+| The same CFO, from a domain one letter off | BLOCK | BLOCK ✓ (strong lookalike) |
+| The current CFO, claiming the wrong job title | ESCALATE | ESCALATE ✓ (three people with that name have worked there, so the role is "can't tell which", not "wrong") |
+| A finance employee who left in October 2026 | BLOCK | **ESCALATE ✗** |
+
+**3 of 4 as expected, and no wrongful approvals.** The miss is a timing problem, not a logic one. Crustdata allows 5 searches a minute. On a cold cache the person search waited past the checks' 20-second deadline, so the fact was marked "cannot verify" and the request went to a person: the safe direction. Read back from the cache, the same check says "left 2026-10". So for a live demo we warm the cache first (`python scripts/warm_cache.py`). Letting rate-limit waits not count against the deadline would fix it, but by the same rule that fix would need another fresh company to test.
 
 ### Second reading of the money fields
 
