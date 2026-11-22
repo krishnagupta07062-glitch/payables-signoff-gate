@@ -13,6 +13,7 @@ Hackathon build (ContextCon 05, 22 Nov 2026). **Code freeze 18:00 IST.** Three p
 Rules for shared files:
 - **`gate/contracts.py` is frozen.** Only Krishna changes it, and only after telling the team. If you need a field, ask; don't edit it.
 - **`gate/runbudget.py` is shared.** Use it; don't change its interface.
+- **`gate/keys.py` is shared (Krishna owns it).** Always use `invoice_key()`, `norm_invoice_number()`, `financial_year()`, `account_hash()` and `idempotency_key(payment_fingerprint(...))` from it. Don't use the prototype versions; the prototype `norm_inv` has a prefix bug.
 - **`requirements.txt`:** add a line only if you must, and say so in your commit message.
 - **Bugs in someone else's file:** don't fix them. Add the failing test and the exact error to `docs/ISSUES.md` and tell the owner.
 
