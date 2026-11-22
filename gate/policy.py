@@ -1,4 +1,4 @@
-"""Policy v1: ordered rules in plain code. OWNER: Krishna.
+"""Policy v1: ordered rules in plain code.
 
 The decider reads typed Claims and Checks only, never raw email text, so pressure, politeness and
 planted notes cannot move it. Precedence: any BLOCK > any ESCALATE > ALLOW. Every rule that fires adds

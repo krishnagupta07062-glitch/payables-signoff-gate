@@ -1,4 +1,4 @@
-"""The only module that calls all three parts. OWNER: Krishna.
+"""The only module that calls all three parts.
 
     trusted vendor record (loaded FIRST) -> extract -> verifiers.run_all -> policy.decide
     -> store.save_decision -> ledger -> executor (ALLOW only)
@@ -89,7 +89,7 @@ def all_case_files() -> list[Path]:
 # ----------------------------------------------------------------------- teammate module adapters
 
 class _MemoryStore:
-    """Stand-in for gate.store until Ayush's store is ready. Same function names."""
+    """Stand-in for gate.store when the store is not available. Same function names."""
 
     def __init__(self):
         self.decisions: list[dict] = []

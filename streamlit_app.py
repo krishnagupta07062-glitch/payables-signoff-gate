@@ -1,4 +1,4 @@
-"""Entry point for the hosted demo (Streamlit Community Cloud). OWNER: Krishna.
+"""Entry point for the hosted demo (Streamlit Community Cloud).
 
 Runs the approval app (app/approvals.py) in a safe, self-contained mode for public visitors:
   - MOCK=1: stored claims and check results from fixtures/ (no model or Crustdata calls, no keys needed);

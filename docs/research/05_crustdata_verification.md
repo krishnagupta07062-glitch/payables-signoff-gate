@@ -308,7 +308,7 @@ POST /person/search
 ```
 → Verdict logic: the vendor id 573 appears only in `past[]`, with `end_date` 2022-11. So **"former CFO, left 2022-11, now CFO at Eicher"** means **BLOCK / escalate**.
 
-Same pattern, `psearch_durgesh` (0.23, with `"explain":true`). Person B: `past` = Bata India "Interim Chief Financial Officer" 2024-12→2024-12, "India Supply Chain Finance Controller" 2024-01→2024-11. `current` = **Bata Group** "Global Supply Chain Finance Controller" since 2025-01. Web news (4.16) still says "Bata India gains on appointing Person B as CFO" (2024-11-22). This is a good demo of "right for the day it is used": the 2024 news is true, but the fact no longer holds in 2026.
+Same pattern, `psearch_person_b` (0.23, with `"explain":true`). Person B: `past` = Bata India "Interim Chief Financial Officer" 2024-12→2024-12, "India Supply Chain Finance Controller" 2024-01→2024-11. `current` = **Bata Group** "Global Supply Chain Finance Controller" since 2025-01. Web news (4.16) still says "Bata India gains on appointing Person B as CFO" (2024-11-22). This is a good demo of "right for the day it is used": the 2024 news is true, but the fact no longer holds in 2026.
 
 ### 4.12 Person search — past CFOs and recent leavers
 `psearch_cfo_past` (0.69 = 3 × 0.23; total_count 4):
@@ -496,7 +496,7 @@ This is a ready-made "I can't verify" output, and it was **free**.
 | social_fraud_kw | /social_post/search | 200 | 0.5 |
 | websearch_bata_news (empty) | /web/search/live | 200 | 0 |
 | websearch_sme_web / bata_news2 / bata_web_q / news_dated / ai | /web/search/live | 200 | 1 each = 5 |
-| psearch_durgesh | /person/search | 200 | 0.23 |
+| psearch_person_b | /person/search | 200 | 0.23 |
 | webenrich_vendor | /web/enrich/live | 200 | 2 |
 | webenrich_human | /web/enrich/live | 200 | 1 |
 | agentquery_try | /agent/query | 404 | – |

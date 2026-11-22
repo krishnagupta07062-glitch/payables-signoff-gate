@@ -1,5 +1,5 @@
 """Development seed: synthetic vendors and decisions, so the UI works before the pipeline is wired.
-OWNER: Ayush. Made-up companies and people only.
+Made-up companies and people only.
 
     python -m app.dev_seed          # seeds runs/gate.sqlite (or $GATE_DB)
 """

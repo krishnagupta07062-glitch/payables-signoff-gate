@@ -1,4 +1,4 @@
-"""Crustdata API client (API version 2025-11-01) with a cache, a rate limiter and budget charging. OWNER: Lavya.
+"""Crustdata API client (API version 2025-11-01) with a cache, a rate limiter and budget charging.
 
 Usage:
     from gate.verifiers.crustdata_client import Crustdata

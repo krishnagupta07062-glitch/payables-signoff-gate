@@ -1,8 +1,8 @@
-"""Checks against our own records: vendor master, payment history, purchase orders. OWNER: Lavya.
+"""Checks against our own records: vendor master, payment history, purchase orders.
 
 No network. `history` rows come from store.history_for(); each has at least request_id, vendor_id,
 invoice_key, invoice_number, amount_inr, invoice_date, account_hash, verdict. Keys come from gate/keys.py
-so duplicates here agree byte for byte with Ayush's payouts.
+so duplicates here agree byte for byte with the payouts.
 """
 from __future__ import annotations
 

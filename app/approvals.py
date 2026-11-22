@@ -1,4 +1,4 @@
-"""Streamlit approval queue and decision viewer. OWNER: Ayush.
+"""Streamlit approval queue and decision viewer.
 
 Run: streamlit run app/approvals.py
 

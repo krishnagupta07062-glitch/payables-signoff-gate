@@ -1,4 +1,4 @@
-"""Baseline for the stage contrast: a plain model guard that reads the raw email and decides. OWNER: Krishna.
+"""Baseline for the stage contrast: a plain model guard that reads the raw email and decides.
 
 This is the design the gate replaces. It sees the untrusted text directly (hidden HTML included, as
 a mail client would pass it), so tone, urgency, authority and planted instructions can move it. The

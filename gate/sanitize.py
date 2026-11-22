@@ -1,4 +1,4 @@
-"""Clean untrusted email/invoice text before any model reads it. OWNER: Krishna.
+"""Clean untrusted email/invoice text before any model reads it.
 
 Removes what a human reader would not see but a model would: hidden HTML elements, HTML comments,
 zero-width and bidi control characters, and Unicode tag characters (U+E0000-E007F, used for invisible

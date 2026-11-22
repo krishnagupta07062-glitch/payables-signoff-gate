@@ -1,4 +1,4 @@
-"""Checks on live Crustdata records: sender domain, vendor alive, requester's role or departure. OWNER: Lavya.
+"""Checks on live Crustdata records: sender domain, vendor alive, requester's role or departure.
 
 Gotchas from docs/research/05_crustdata_verification.md that this code handles:
 - identify confidence 1.0 is not proof: the domain must be in basic_info.all_domains / primary_domain.

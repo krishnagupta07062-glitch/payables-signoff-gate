@@ -1,4 +1,4 @@
-"""Small helpers shared by the checks. OWNER: Lavya."""
+"""Small helpers shared by the checks."""
 from __future__ import annotations
 
 import hashlib

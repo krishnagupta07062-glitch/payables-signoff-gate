@@ -1,4 +1,4 @@
-"""Decision report export (Markdown). OWNER: Ayush.
+"""Decision report export (Markdown).
 
 decision_report_md(request_id) -> a self-contained Markdown report an auditor can read without the
 app: every claim, every check with its status, value, note and sources, every rule fired, the payment

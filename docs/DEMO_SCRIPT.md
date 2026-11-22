@@ -1,6 +1,6 @@
 # Demo script: 2 minutes
 
-*Owner: Ayush. Recorded from the **Demo** tab of `app/approvals.py`. Every step runs the real pipeline, store, executor and ledger. Payouts go to RazorpayX test mode when `PAYMENTS_MODE=test`, otherwise to the mock provider (same idempotency rules).*
+*Recorded from the **Demo** tab of `app/approvals.py`. Every step runs the real pipeline, store, executor and ledger. Payouts go to RazorpayX test mode when `PAYMENTS_MODE=test`, otherwise to the mock provider (same idempotency rules).*
 
 ## Before recording (5 minutes)
 

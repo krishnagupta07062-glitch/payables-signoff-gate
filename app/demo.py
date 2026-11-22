@@ -1,4 +1,4 @@
-"""The 2-minute demo walkthrough, as plain functions (the Demo tab renders them). OWNER: Ayush.
+"""The 2-minute demo walkthrough, as plain functions (the Demo tab renders them).
 
 Order (docs/DEMO_SCRIPT.md):
   1. case 03  lookalike-domain bank change naming the real CFO   -> BLOCK, contradicting source shown

@@ -1,4 +1,4 @@
-"""Exactly-once payment executor. OWNER: Ayush.
+"""Exactly-once payment executor.
 
 The executor is the enforcement point: it refuses any payment without a receipt whose action hash,
 expiry and single-use nonce match. Fails closed.

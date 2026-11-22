@@ -1,4 +1,4 @@
-"""Free Indian and domain checks: GSTIN, IFSC, RDAP domain age, lookalike domains. OWNER: Lavya.
+"""Free Indian and domain checks: GSTIN, IFSC, RDAP domain age, lookalike domains.
 
 Every function returns a contracts.Check and never raises for bad input or a failed source:
 a source that can't answer gives UNVERIFIABLE with a note naming what is missing.

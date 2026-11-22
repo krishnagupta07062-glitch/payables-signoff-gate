@@ -1,4 +1,4 @@
-"""Payment worker for the UI. OWNER: Ayush.
+"""Payment worker for the UI.
 
 The UI never pays directly: after a person approves, it calls pay_approved(), which issues a receipt
 bound to the decision's action hash and hands it to the executor (the single enforcement point).

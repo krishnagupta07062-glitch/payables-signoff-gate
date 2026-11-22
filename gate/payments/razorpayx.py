@@ -1,4 +1,4 @@
-"""RazorpayX Payouts (test mode) and a mock provider. OWNER: Ayush.
+"""RazorpayX Payouts (test mode) and a mock provider.
 
 PAYMENTS_MODE=mock (default) or test. See docs/research/04_engineering.md for headers and gotchas.
 

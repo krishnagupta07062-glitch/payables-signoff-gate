@@ -1,4 +1,4 @@
-"""Run every demo case and compare against the expected verdict. OWNER: Krishna.
+"""Run every demo case and compare against the expected verdict.
 
     python scripts/run_demo.py                 # all cases (MOCK=1 by default: offline, no credits)
     python scripts/run_demo.py --live          # MOCK=0: real model extraction and live checks

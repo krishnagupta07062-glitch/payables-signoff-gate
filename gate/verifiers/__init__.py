@@ -1,4 +1,4 @@
-"""Verification checks. OWNER: Lavya.
+"""Verification checks.
 
 Contract: run_all() never raises. Every check that errors or times out comes back as
 Check(status=UNVERIFIABLE, note=<what is missing>). See gate/contracts.py CHECK_NAMES for names.

@@ -1,4 +1,4 @@
-"""Untrusted email/invoice text -> typed Claims. OWNER: Krishna.
+"""Untrusted email/invoice text -> typed Claims.
 
 The model only EXTRACTS what the text claims. It never decides, never judges trust, and its output is
 validated field by field: anything malformed becomes None, so the policy sees "unknown" and escalates.

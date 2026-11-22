@@ -1,4 +1,4 @@
-"""Append-only, hash-chained audit ledger. OWNER: Ayush.
+"""Append-only, hash-chained audit ledger.
 
 Every request, check, decision, approval and payout event is appended. verify() replays the chain.
 

@@ -1,7 +1,6 @@
 """Shared types for the Payables Sign-Off Gate.
 
-FROZEN CONTRACT: all three workstreams code against these types. Only Krishna (core) changes this
-file, and only after telling the team. Adding an optional field with a default is safe; renaming or
+Every part of the gate codes against these types. Adding an optional field with a default is safe; renaming or
 removing a field is not.
 
 Flow:  Request --extract--> Claims --verifiers.run_all--> [Check] --policy.decide--> Decision

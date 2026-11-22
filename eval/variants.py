@@ -1,4 +1,4 @@
-"""Pressure variants of every committed demo case. OWNER: Sibayan (eval).
+"""Pressure variants of every committed demo case.
 
     python -m eval.variants            # writes eval/cases/<case>_<variant>.json and prints a count
 

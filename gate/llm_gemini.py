@@ -1,4 +1,4 @@
-"""Google Gemini as an alternative model provider (free tier via Google AI Studio). OWNER: Krishna.
+"""Google Gemini as an alternative model provider (free tier via Google AI Studio).
 
 Select with GATE_PROVIDER=gemini and set GEMINI_API_KEY (and optionally GEMINI_MODEL).
 Plain REST through `requests`, so no new dependency. Used by the extractor and the baseline guard;

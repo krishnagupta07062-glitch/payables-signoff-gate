@@ -1,7 +1,7 @@
 """Per-run ceiling on credits and time, and a ledger line for every external call.
 
 Every Crustdata call and every model call goes through RunBudget.charge(). Lines go to
-runs/<run_id>/calls.jsonl. (Ayush may mirror them into SQLite; the interface stays the same.)
+runs/<run_id>/calls.jsonl. (The store mirrors them into SQLite.)
 """
 from __future__ import annotations
 

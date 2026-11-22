@@ -1,4 +1,4 @@
-"""MCP server for the Payables Sign-Off Gate. OWNER: Sibayan (eval + MCP).
+"""MCP server for the Payables Sign-Off Gate.
 
 Exposes the gate to any MCP client (Claude Code, Claude Desktop) as two tools:
   - gate_evaluate(request, vendor_id): run the gate on one request and return the decision with every

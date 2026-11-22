@@ -1,7 +1,7 @@
 """Cached Crustdata caller: cache keyed by sha256(path+canonical body); logs X-Credits-Used. Never prints key."""
 import hashlib, json, sys, time, sqlite3, os, urllib.request, urllib.error
 from pathlib import Path
-ENV = Path(r"C:\Users\KRISHNA GUPTA\Desktop\contextcon\.env")
+ENV = Path(__file__).resolve().parent.parent / ".env"
 KEY = next(l.split("=",1)[1].strip() for l in ENV.read_text().splitlines() if l.startswith("CRUSTDATA_API_KEY="))
 DB = Path(__file__).with_name("cd_cache.sqlite")
 CEILING = 30.0

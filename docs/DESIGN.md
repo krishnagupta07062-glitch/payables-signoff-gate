@@ -1,7 +1,6 @@
-# Implementation plan: Payables Sign-Off Gate
+# Design: Payables Sign-Off Gate
 
-*ContextCon 05, BITS Pilani, 22 Nov 2026. Team: Krishna (core), Lavya (checks), Ayush (payments + UI). Code freeze at 18:00 IST.*
-*Live progress: `docs/STATUS.md`. Research: `docs/research/00_SYNTHESIS.md`. Copy-paste prompts for each person: `docs/TEAM_PROMPTS.md`. Shared rules: `CLAUDE.md`.*
+*ContextCon 05, BITS Pilani, 22 Nov 2026. Research behind it: `docs/research/00_SYNTHESIS.md`. Diagram: `docs/ARCHITECTURE.md`.*
 
 ## 1. What we are building
 
@@ -22,22 +21,22 @@
 ## 2. Architecture
 
 ```
-Request (email/invoice) ─► sanitize ─► extract (Claude, tool JSON → Claims)        [Krishna]
+Request (email/invoice) ─► sanitize ─► extract (Claude or Gemini, JSON → Claims)
                                            │
 Vendor (trusted base record, loaded FIRST) ┤
                                            ▼
-                     verifiers.run_all → [Check] with Sources                       [Lavya]
+                     verifiers.run_all → [Check] with Sources
                      Crustdata · RDAP · IFSC · GSTIN · GST portal · history
                                            ▼
-                     policy.decide → Decision (BLOCK > ESCALATE > ALLOW)            [Krishna]
+                     policy.decide → Decision (BLOCK > ESCALATE > ALLOW)
                                            ▼
-         store.save_decision ─► ESCALATE → Streamlit approval queue                 [Ayush]
+         store.save_decision ─► ESCALATE → Streamlit approval queue
                                 ALLOW / approved → executor (receipt = action hash + nonce + expiry)
                                            ▼
-                     outbox → RazorpayX payout (X-Payout-Idempotency) → ledger      [Ayush]
+                     outbox → RazorpayX payout (X-Payout-Idempotency) → ledger
 ```
 
-`gate/pipeline.py` (Krishna) is the only module that calls all three parts. Until a part is ready, the pipeline uses its mock.
+`gate/pipeline.py` is the only module that calls all three parts (extraction, checks, payments).
 
 ## 3. Contracts (frozen: `gate/contracts.py`)
 
@@ -53,18 +52,18 @@ Vendor (trusted base record, loaded FIRST) ┤
 
 Shared helpers: `canonical_json()`, `action_hash()`, `check_by_name()`. `gate/runbudget.py` holds `RunBudget(max_credits, max_seconds)`: call `.ensure()` before every external call and `.charge()` after it.
 
-**Interfaces between owners:**
+**Interfaces between the parts:**
 
-| Function | Owner | Called by |
+| Function | Module | Called by |
 |---|---|---|
-| `extractor.extract(request, budget) -> Claims` | Krishna | pipeline |
-| `verifiers.run_all(request, claims, vendor, history, budget) -> list[Check]` (never raises) | Lavya | pipeline |
-| `policy.decide(request, claims, vendor, checks) -> Decision` | Krishna | pipeline |
-| `store.init_db`, `upsert_vendor`, `get_vendor`, `save_request`, `save_decision`, `history_for(vendor_id)`, `pending_escalations`, `record_approval` | Ayush | pipeline, UI |
-| `executor.issue_receipt(decision, approver)`, `execute(decision, receipt)`, `resume()` | Ayush | pipeline, UI |
-| `ledger.append(event_type, payload)`, `verify()` | Ayush | pipeline, executor, UI |
+| `extractor.extract(request, budget) -> Claims` | core | pipeline |
+| `verifiers.run_all(request, claims, vendor, history, budget) -> list[Check]` (never raises) | checks | pipeline |
+| `policy.decide(request, claims, vendor, checks) -> Decision` | core | pipeline |
+| `store.init_db`, `upsert_vendor`, `get_vendor`, `save_request`, `save_decision`, `history_for(vendor_id)`, `pending_escalations`, `record_approval` | payments | pipeline, UI |
+| `executor.issue_receipt(decision, approver)`, `execute(decision, receipt)`, `resume()` | payments | pipeline, UI |
+| `ledger.append(event_type, payload)`, `verify()` | payments | pipeline, executor, UI |
 
-## 4. Policy v1 (Krishna implements in `gate/policy.py`)
+## 4. Policy v1 (`gate/policy.py`)
 
 Rules are checked in order; the first BLOCK wins, then any ESCALATE, otherwise ALLOW. Each reason names its rule and its checks.
 
@@ -88,7 +87,7 @@ Rules are checked in order; the first BLOCK wins, then any ESCALATE, otherwise A
 | E10 | `sender_domain_lookalike` CONTRADICTED on a weak signal only (same name under another ending, or contains the vendor's name). Strong signals (punycode, look-alike characters, 1–2 edits) stay B2 | ESCALATE |
 | A1 | None of the above | ALLOW |
 
-## 5. Checks (Lavya implements in `gate/verifiers/`)
+## 5. Checks (`gate/verifiers/`)
 
 | Check | Source | Cost and notes |
 |---|---|---|
@@ -106,7 +105,7 @@ Rules are checked in order; the first BLOCK wins, then any ESCALATE, otherwise A
 | `vendor_news` | Crustdata `/company/enrich` `["news"]` | 2 credits; optional |
 | `penny_drop_name_match` | Simulated in test mode (RazorpayX validation is simulated) | Mark as a simulation in the source |
 
-## 6. Demo cases (Krishna: `fixtures/`; each has a calm and a pushy version)
+## 6. Demo cases (`fixtures/`; each has a calm and a pushy version)
 
 | # | Case | Expected |
 |---|---|---|
@@ -125,7 +124,7 @@ Rules are checked in order; the first BLOCK wins, then any ESCALATE, otherwise A
 
 Committed fixtures use synthetic people. Cases that name real role holders live in `fixtures/private/` (gitignored); we demo them live.
 
-## 7. Data model (Ayush: `gate/store.py`, SQLite in WAL mode, `runs/gate.sqlite`)
+## 7. Data model (`gate/store.py`, SQLite in WAL mode, `runs/gate.sqlite`)
 
 | Table | Holds |
 |---|---|
@@ -139,53 +138,11 @@ Committed fixtures use synthetic people. Cases that name real role holders live 
 | `calls` | Mirror of the `RunBudget` lines |
 | `ledger` | id, prev_hash, hash, event_type, body JSON, at (triggers block UPDATE and DELETE) |
 
-## 8. Timeline
-
-| Time | Checkpoint | Krishna | Lavya | Ayush |
-|---|---|---|---|---|
-| 14:50 | **Sibayan joins** (evaluation and MCP server; see `docs/TEAM_PROMPTS.md`). By 16:30: 100+ pressure variants measured, gate vs plain guard, results committed. Stretch: the MCP server | | | |
-| 14:00 | Skeleton pushed; everyone pastes the Kickoff prompt | sanitize, extractor | crustdata_client, india_checks | store, ledger |
-| 15:15 | **Checkpoint 1:** each module works on its own, offline tests pass, pushed | policy + tests, fixtures | crustdata_checks, history_checks, run_all | executor, mock payouts, crash test |
-| 15:30 | Integration prompt; **one request end to end** (case 1 → mock payout) | Wire the pipeline | warm_cache, fix statuses | UI wired to the pipeline |
-| 16:30 | **All 10 cases pass** with `scripts/run_demo.py` (live Crustdata, warm cache) | Baseline guard, contrast | Sources clickable | RazorpayX test mode |
-| 16:45 | Polish prompt | Flaky cases, README | Edge cases | Demo screen, demo script |
-| 17:15 | **Feature freeze** | README for the judges | Two clean full runs | Record the 2-minute video |
-| 17:45 | Repo public: `gh repo edit --visibility public --accept-visibility-change-consequences`; submit the form | ✔ | ✔ | ✔ |
-| 18:00 | Code freeze | | | |
-
-**If you fall behind:** cut scope in this order: vendor news → GST portal → RazorpayX test mode (keep the mock) → Hinglish variant. Never cut: exactly-once, fail-closed and sources.
-
-## 9. Definition of done
-
-- **Krishna:**
-  - `python scripts/run_demo.py` prints all 10 cases with expected = actual and exits 0;
-  - policy tests cover every rule;
-  - `--contrast` shows the baseline flipping where the gate doesn't;
-  - the README answers the judges' "approaches weighed / what worked / hardest case / who could it get wrong".
-- **Lavya:**
-  - every check returns a `Check` with sources;
-  - `run_all` never raises;
-  - offline tests pass;
-  - `scripts/warm_cache.py` warms the demo vendors, and a second run spends 0 credits;
-  - a Crustdata 429 or timeout gives UNVERIFIABLE.
-- **Ayush:**
-  - the crash test proves exactly one payout;
-  - a double-click approve is a no-op;
-  - a tampered ledger row is detected by `verify()`;
-  - Streamlit shows the inbox, decision cards with sources, approve/reject, ledger verify and credits;
-  - RazorpayX test mode works if keys exist, otherwise the mock.
-
-- **Sibayan:**
-  - `eval/variants.py` makes 100+ synthetic pressure variants, each with the same expected verdict as its calm case;
-  - `eval/run_eval.py` reports gate vs plain-guard accuracy and flip rate per pressure type, cached so re-runs are free;
-  - results are committed in `eval/results/`, with offline tests in `tests/eval/`;
-  - stretch: an MCP server exposing `gate_evaluate` (never pays) and `ledger_verify`.
-
-## 10. Risks and fallbacks
+## 8. Risks and fallbacks
 
 | Risk | Fallback |
 |---|---|
-| Crustdata rate limit (5 per minute) or a slow call during the demo | Warm the cache before the demo; each person uses their own key; the cache is keyed by request hash |
+| Crustdata rate limit (5 per minute) or a slow call during the demo | Warm the cache before the demo; the cache is keyed by request hash |
 | RazorpayX signup blocked, or payouts stuck "processing" | Keep `PAYMENTS_MODE=mock` (same idempotency semantics) and say so; show test mode on a recording if it worked earlier |
 | Claude extraction is wrong on messy text | Validate the tool output, mark fields it couldn't extract as unknown, and E6 escalates; fixtures carry expected claims for `MOCK=1` |
 | A real SME isn't in Crustdata | That's case 6: "cannot verify", never "fraud" |

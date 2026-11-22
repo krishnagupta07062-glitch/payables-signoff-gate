@@ -1,4 +1,4 @@
-"""Shared keys. OWNER: Krishna. Everyone must use these, so duplicates and idempotency agree.
+"""Shared keys. Everyone must use these, so duplicates and idempotency agree.
 
 - invoice_key: GSTIN | normalised invoice number | Indian financial year. CGST Rule 46 makes the
   invoice number unique per supplier per financial year, so a repeat of this key is a duplicate.

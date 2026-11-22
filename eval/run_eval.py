@@ -1,4 +1,4 @@
-"""Gate vs plain model guard under pressure. OWNER: Sibayan (eval).
+"""Gate vs plain model guard under pressure.
 
     python -m eval.run_eval                       # live: real extraction (GATE_PROVIDER=gemini), stored checks
     python -m eval.run_eval --limit 20 --sleep 4  # first 20 cases, 4 s between uncached model calls

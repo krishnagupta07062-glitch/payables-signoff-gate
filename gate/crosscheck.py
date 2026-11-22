@@ -1,4 +1,4 @@
-"""Second reading of the fields that move money. OWNER: Krishna.
+"""Second reading of the fields that move money.
 
 The extractor is the one place a model still shapes the outcome. IFSC, GSTIN, account numbers and
 invoice numbers have strict formats, so we read them a second way with fixed patterns, from the same

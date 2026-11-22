@@ -1,4 +1,4 @@
-"""SQLite store. OWNER: Ayush.
+"""SQLite store.
 
 Tables: vendors, vendor_accounts, requests, decisions, approvals, receipts, outbox, payouts, calls,
 ledger (WAL mode). Account numbers are stored only as last-4 plus a keyed hash (HMAC-SHA256 with

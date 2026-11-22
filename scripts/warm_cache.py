@@ -1,4 +1,4 @@
-"""Warm the Crustdata cache for every demo request before the demo. OWNER: Lavya.
+"""Warm the Crustdata cache for every demo request before the demo.
 
     python scripts/warm_cache.py                # the private live-demo cases (fixtures/private/requests/)
     python scripts/warm_cache.py --all          # also the synthetic cases (their domains don't resolve live)

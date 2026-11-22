@@ -1,4 +1,4 @@
-"""Build the committed demo fixtures (synthetic companies and people only). OWNER: Krishna.
+"""Build the committed demo fixtures (synthetic companies and people only).
 
 Run: python fixtures/build_fixtures.py   -> writes fixtures/vendors.json and fixtures/requests/*.json
 
