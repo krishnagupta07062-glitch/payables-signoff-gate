@@ -24,6 +24,14 @@ Tests: `tests/verifiers/` has 39 tests. Full suite: 96 passed, offline.
 
 ## Log
 
+### ~15:55: finished the Integration prompt (Lavya 2)
+- Looked for new instructions for Lavya: none in the repo since the last push.
+- The Lavya 2 prompt still had open parts, now done:
+  - **Every Check carries a Source.** The vendor-not-linked path now points at the vendor record. `run_all` adds a fallback source naming the request and vendor to anything that consulted no outside record. New test: `test_every_check_has_a_source`.
+  - **Krishna's demo:** `run_demo.py --live-checks --only-private` gives 3/3, and `MOCK=1` gives 17/17.
+  - **Summary in `docs/ISSUES.md`:** credits (0.89 cold, 0.00 warm), slowest checks, and nothing UNVERIFIABLE that shouldn't be.
+- Tests: 148 passed.
+
 ### ~15:45: polish prompt (Lavya 3) done
 Each of the five edge cases, with its test:
 1. **Unknown small vendor** → `requester_current_role` UNVERIFIABLE, "call back on the number on file". Already done; `test_requester_small_vendor_unlinked`, `test_requester_not_found_says_call_back`.

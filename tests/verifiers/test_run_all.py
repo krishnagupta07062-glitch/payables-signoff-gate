@@ -75,3 +75,15 @@ def test_run_all_garbage_input_never_raises(vendor, budget):
     r = Request(request_id="R3", kind="email", raw_text="", sender_email="not-an-email")
     out = verifiers.run_all(r, Claims(invoice_number="???", amount_inr=-1), vendor, None, budget)
     assert isinstance(out, list)
+
+
+def test_every_check_has_a_source(invoice_request, invoice_claims, vendor, budget, monkeypatch):
+    # including the paths where nothing outside was consulted: vendor not linked, crashed check, missing input
+    vendor.crustdata_company_id = None
+    monkeypatch.setattr(cdc, "vendor_active", lambda *a, **k: 1 / 0)
+    invoice_claims.requester_name = "Riya Synthetic"
+    invoice_request.sender_email = None
+    checks = verifiers.run_all(invoice_request, invoice_claims, vendor, None, budget)
+    assert checks and all(c.sources and c.sources[0].ref for c in checks), [c.name for c in checks if not c.sources]
+    req_role = [c for c in checks if c.name == "requester_current_role"][0]
+    assert req_role.sources[0].kind == "vendor_master"

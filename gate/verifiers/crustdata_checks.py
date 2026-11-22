@@ -297,8 +297,10 @@ def requester_checks(claims: Claims, vendor: Vendor, budget: Optional[RunBudget]
         return [unverifiable(n1, f"No requester name in the request; {CALLBACK}."),
                 unverifiable(n2, "No requester name in the request.")]
     if not vendor.crustdata_company_id:
-        return [unverifiable(n1, f"Vendor is not linked to a Crustdata company; {CALLBACK}."),
-                unverifiable(n2, "Vendor is not linked to a Crustdata company.")]
+        vm = [Source(kind="vendor_master", ref=f"vendor:{vendor.vendor_id}",
+                     excerpt="crustdata_company_id: none (vendor not linked to a Crustdata company)")]
+        return [unverifiable(n1, f"Vendor is not linked to a Crustdata company; {CALLBACK}.", vm),
+                unverifiable(n2, "Vendor is not linked to a Crustdata company.", list(vm))]
     cd = cd or default_client()
     try:
         res = _person_search(cd, who, vendor.crustdata_company_id, budget)

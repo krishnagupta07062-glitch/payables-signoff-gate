@@ -18,7 +18,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from typing import Callable
 
-from gate.contracts import CHECK_NAMES, Check, CheckStatus, Claims, Request, RequestKind, Vendor
+from gate.contracts import CHECK_NAMES, Check, CheckStatus, Claims, Request, RequestKind, Source, Vendor
 from gate.runbudget import RunBudget
 from gate.verifiers import crustdata_checks as cdc
 from gate.verifiers import history_checks as hc
@@ -107,4 +107,7 @@ def run_all(request: Request, claims: Claims, vendor: Vendor, history: list[dict
     for c in out:  # guard the frozen contract: only known names leave this module
         if c.name not in CHECK_NAMES:
             c.note = f"(unknown check name) {c.note}"
+        if not c.sources:  # every Check carries a Source; when nothing outside was consulted, point at our records
+            c.sources = [Source(kind="gate", ref=f"request:{request.request_id} vendor:{vendor.vendor_id}",
+                                excerpt=f"no outside record consulted: {c.note}"[:300])]
     return out

@@ -17,6 +17,20 @@ Append only. Each entry: the file, the owner, the failing test or command, and t
 
 ## checks
 
+- **~15:55, from Lavya (checks), for everyone: integration summary (Lavya 2 prompt), and polish (Lavya 3) done.**
+  - **Demo:** `python scripts/run_demo.py --live-checks --only-private` gives 3/3 as expected (11 BLOCK, 12 BLOCK, 13 ESCALATE), and `MOCK=1` gives 17/17.
+  - **Credits:**
+    - Cold (cache deleted): **0.89** for the three private cases (Bata identify 0.2, person searches 0.23 + 0.46). `bata-india.co` identify is free (no match).
+    - Warm: **0.00**. Run `python scripts/warm_cache.py` once before the demo.
+    - A Bata *payment* would add `vendor_active`: about 0.03 search + 1-2 web fetch (a retry in `human_mode`, because `bata.in` answers bots with 403).
+  - **Slowest checks (cold):** the person search for `requester_*` at about 1-2 s, `vendor_active` at about 5-6 s (two web fetches), and RDAP/IFSC/GST at about 0.3-0.6 s. Warm, every Crustdata check is about 0 s. The 5-per-minute limit is the real risk on a cold cache: after 5 search/identify calls in a minute the next one waits, and `run_all`'s 20 s deadline turns it into UNVERIFIABLE. Warm the cache first.
+  - **UNVERIFIABLE that shouldn't be:** none in the private cases. Two are UNVERIFIABLE by design:
+    - `penny_drop_name_match` (simulated in test mode, so it can't confirm a new account; E3);
+    - `bata.com` as a sender domain (Crustdata files it under Bata Group, id 1135086, a separate record), now flagged "possibly the same company under another name; confirm by hand".
+  - **Every Check now carries a Source.** The vendor-not-linked path points at the vendor record. `run_all` adds a fallback `request:… vendor:…` source to anything that consulted no outside record (missing input, timeout, crash).
+  - **Polish:** unknown small vendor → "call back on the number on file"; 429 and timeout mid-`run_all` fail closed while free sources still answer; an expired domain that Crustdata calls active → CONTRADICTED; rebrand or parent domains are flagged, not contradicted; cache cleared and warmed twice (0.89 → 0.00). Hindi dates don't apply: no check uses `/web/search/live`.
+  - From 17:15: bug fixes only. Report anything in my files here and I'll take it.
+
 - **~15:25, from Lavya (checks), for Krishna: same-name fix done, and a note on private case 11.**
   - **Same name (your case 12 entry): fixed in `crustdata_checks.py`.**
     - Candidates are scored by how well their role at the vendor matches `claims.requester_role`, then by the most recent role.
