@@ -46,8 +46,9 @@ CSS = f"""
 /* type: large, tight, quiet */
 h1, h2, h3 {{ letter-spacing: -0.035em; color: var(--ink); font-weight: 500 !important; }}
 h4 {{ text-transform: uppercase; letter-spacing: .1em; color: var(--muted) !important;
-      font-size: .72rem !important; font-weight: 600 !important; margin-top: 1.8rem !important; }}
+      font-size: .78rem !important; font-weight: 600 !important; margin-top: 1.8rem !important; }}
 [data-testid="stCaptionContainer"] {{ color: var(--muted) !important; }}
+[data-testid="stCaptionContainer"] p {{ font-size: .95rem; line-height: 1.6; }}
 code {{ font-family: var(--mono) !important; font-variant-numeric: tabular-nums; border-radius: 5px; }}
 b, strong {{ font-weight: 600; }}
 hr {{ border-color: var(--line) !important; opacity: 1; }}
@@ -65,7 +66,7 @@ a {{ text-underline-offset: 3px; text-decoration-thickness: 1px; }}
 [data-testid="stTabs"] [role="tablist"] {{ gap: 1.9rem; border-bottom: 1px solid var(--line); }}
 [data-testid="stTab"] {{ color: var(--muted); padding-left: 0 !important; padding-right: 0 !important;
       transition: color .2s var(--ease); }}
-[data-testid="stTab"] p {{ font-size: .92rem; font-weight: 500; }}
+[data-testid="stTab"] p {{ font-size: 1rem; font-weight: 500; }}
 [data-testid="stTab"]:hover, [data-testid="stTab"][aria-selected="true"] {{ color: var(--ink); }}
 [data-testid="stTabs"] [role="tabpanel"] {{ animation: sg-rise .32s var(--ease) both; }}
 
@@ -95,7 +96,7 @@ a {{ text-underline-offset: 3px; text-decoration-thickness: 1px; }}
 
 /* inbox list: rows, not buttons; the selected row gets an ink edge and a white card */
 .st-key-queue .stButton button {{
-  justify-content: flex-start; text-align: left; font-family: var(--mono); font-size: .8rem; font-weight: 500;
+  justify-content: flex-start; text-align: left; font-family: var(--mono); font-size: .88rem; font-weight: 500;
   background: transparent !important; border-color: transparent !important; color: var(--ink) !important;
   border-radius: 10px !important; padding: .5rem .8rem; box-shadow: none !important;
 }}
@@ -122,7 +123,7 @@ a {{ text-underline-offset: 3px; text-decoration-thickness: 1px; }}
 .sg-badge {{ display: inline-flex; align-items: center; font-family: var(--mono); font-weight: 600;
   letter-spacing: .08em; text-transform: uppercase; border-radius: 999px; border: 1px solid; line-height: 1;
   white-space: nowrap; vertical-align: middle; }}
-.sg-badge.sm {{ font-size: .64rem; padding: .34em .75em; }}
+.sg-badge.sm {{ font-size: .7rem; padding: .34em .75em; }}
 .sg-badge.md {{ font-size: .78rem; padding: .5em 1.05em; }}
 .sg-badge.xl {{ font-size: 2.1rem; padding: .3em .85em; letter-spacing: .06em;
   animation: sg-stamp .45s var(--ease) both; }}
@@ -138,20 +139,20 @@ a {{ text-underline-offset: 3px; text-decoration-thickness: 1px; }}
 .sg-head .sg-id {{ font-family: var(--mono); font-size: 1.05rem; font-weight: 500; }}
 .sg-reason {{ display: flex; gap: .8rem; align-items: baseline; padding: .6rem 0; border-bottom: 1px solid var(--line); }}
 .sg-reason:last-child {{ border-bottom: 0; }}
-.sg-rule {{ font-family: var(--mono); font-size: .72rem; font-weight: 600; color: var(--ink); background: var(--lime);
+.sg-rule {{ font-family: var(--mono); font-size: .78rem; font-weight: 600; color: var(--ink); background: var(--lime);
   border-radius: 6px; padding: .16em .5em; white-space: nowrap; }}
 .sg-check {{ border: 1px solid var(--line); border-radius: 12px; background: var(--card); padding: .8rem 1rem;
   margin: .5rem 0; box-shadow: inset 3px 0 0 var(--c, var(--line));
   transition: box-shadow .2s var(--ease), transform .2s var(--ease); }}
 .sg-check:hover {{ box-shadow: inset 3px 0 0 var(--c, var(--line)), var(--shadow); }}
-.sg-check .sg-status {{ font-family: var(--mono); font-size: .66rem; font-weight: 600; letter-spacing: .08em;
+.sg-check .sg-status {{ font-family: var(--mono); font-size: .72rem; font-weight: 600; letter-spacing: .08em;
   color: var(--c); margin-left: .45rem; }}
-.sg-check .sg-src {{ font-size: .8rem; color: var(--muted); margin-top: .4rem; line-height: 1.6; }}
+.sg-check .sg-src {{ font-size: .87rem; color: var(--muted); margin-top: .4rem; line-height: 1.6; }}
 .sg-check .sg-src a {{ color: var(--ink); }}
 .sg-check.lg {{ font-size: 1.02rem; }}
 .sg-acct {{ border: 1px solid var(--line); border-radius: 14px; padding: .9rem 1.1rem; background: var(--card); }}
 .sg-acct.claimed {{ border-color: var(--warn-fill); box-shadow: 0 0 0 3px rgba(245,165,36,.14); }}
-.sg-acct .sg-label {{ font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 600;
+.sg-acct .sg-label {{ font-size: .74rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 600;
   margin-bottom: .5rem; color: var(--muted); }}
 .sg-acct.trusted .sg-label {{ color: var(--ok); }}
 .sg-acct.claimed .sg-label {{ color: var(--warn); }}

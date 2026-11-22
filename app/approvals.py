@@ -29,7 +29,7 @@ except OSError:
 
 import streamlit as st  # noqa: E402
 
-from app import demo, report, theme, worker  # noqa: E402
+from app import demo, hero, report, theme, worker  # noqa: E402
 from gate import executor, ledger, store  # noqa: E402
 from gate.payments import razorpayx  # noqa: E402
 
@@ -68,7 +68,7 @@ with st.sidebar:
     else:
         st.caption("No external calls recorded yet.")
     v = ledger.verify()
-    st.markdown(f"<div class='sg-muted' style='font-size:.85rem'>"
+    st.markdown(f"<div class='sg-muted' style='font-size:.92rem'>"
                 f"{theme.status_dot('VERIFIED' if v['ok'] else 'CONTRADICTED')} &nbsp;"
                 + html.escape("Ledger chain OK" if v["ok"] else f"Ledger broken at row {v['first_bad_row']}")
                 + f" · <span class='sg-mono'>{v['rows']}</span> rows</div>", unsafe_allow_html=True)
@@ -99,7 +99,7 @@ def decision_card(request_id: str, where: str = "inbox") -> None:
     meta = [("Kind", req.get('kind', '?')), ("From", req.get('sender') or '?'),
             ("Vendor", vendor.legal_name if vendor else row['vendor_id'] or 'unknown'),
             ("Policy", d.get('policy_version')), ("Decided", d.get('decided_at'))]
-    st.markdown("<div style='font-size:.85rem;line-height:1.9'>" + " &nbsp;·&nbsp; ".join(
+    st.markdown("<div style='font-size:.95rem;line-height:1.9'>" + " &nbsp;·&nbsp; ".join(
         f"<span class='sg-muted'>{k}:</span> {html.escape(str(v))}" for k, v in meta) + "</div>",
         unsafe_allow_html=True)
 
@@ -139,7 +139,7 @@ def decision_card(request_id: str, where: str = "inbox") -> None:
             rows = "".join(
                 f"<div style='margin:.2rem 0'><span class='sg-mono'>{html.escape(a.ifsc)} · ••••"
                 f"{html.escape(a.account_last4)}</span> · {html.escape(a.holder_name or '')}"
-                f"<br><span class='sg-muted' style='font-size:0.82em'>added {html.escape(str(a.added_at or '?'))}, "
+                f"<br><span class='sg-muted' style='font-size:0.9em'>added {html.escape(str(a.added_at or '?'))}, "
                 f"verified {html.escape(str(a.verified_at or 'never'))}</span></div>"
                 for a in (vendor.bank_accounts if vendor else []))
             if not vendor or not vendor.bank_accounts:
@@ -162,7 +162,7 @@ def decision_card(request_id: str, where: str = "inbox") -> None:
         st.markdown(f"<div class='sg-amount'>₹{action['amount_paise'] / 100:,.2f} "
                     f"<span class='sg-muted' style='font-size:.55em'>to ••••{html.escape(action['account_last4'])} "
                     f"(<code>{html.escape(action['ifsc'])}</code>)</span></div>"
-                    f"<div class='sg-muted' style='font-size:.82rem'>invoice <code>{html.escape(action['invoice_key'])}"
+                    f"<div class='sg-muted' style='font-size:.9rem'>invoice <code>{html.escape(action['invoice_key'])}"
                     f"</code> · key <code>{html.escape(action['idempotency_key'])}</code></div>",
                     unsafe_allow_html=True)
     if claims.get("urgency_cues"):
@@ -222,7 +222,7 @@ with tab_inbox:
                              type="primary" if d["request_id"] == sel else "secondary"):
                     st.session_state["selected"] = sel = d["request_id"]
                     st.rerun()
-                st.markdown(f"<div style='margin:-10px 0 10px 10px;font-size:0.76em' class='sg-muted'>"
+                st.markdown(f"<div style='margin:-10px 0 10px 10px;font-size:0.85em' class='sg-muted'>"
                             f"{badge(d['verdict'])} &nbsp;{html.escape(sub)}</div>", unsafe_allow_html=True)
         with right:
             decision_card(sel)
@@ -254,9 +254,8 @@ def evidence(request_id: str, only_problems: bool = True) -> None:
 
 with tab_demo:
     ds = st.session_state.setdefault("demo", {})
-    top_l, top_r = st.columns([3, 2])
-    top_l.markdown("<div class='sg-hero'>Pay each invoice once. <mark>Never change a bank account on an "
-                   "email's word.</mark></div>", unsafe_allow_html=True)
+    hero.render()
+    top_r, _ = st.columns([2, 3], vertical_alignment="center")
     if top_r.button("Start fresh demo", type="primary", width="stretch", icon=":material/restart_alt:"):
         st.session_state["demo"] = ds = {"db": demo.fresh_db()}
         st.rerun()

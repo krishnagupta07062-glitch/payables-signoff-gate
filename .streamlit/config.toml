@@ -38,7 +38,7 @@ grayTextColor = "#6B6760"
 font = "Geist:https://fonts.googleapis.com/css2?family=Geist:wght@300..700&display=swap"
 headingFont = "Geist:https://fonts.googleapis.com/css2?family=Geist:wght@300..700&display=swap"
 codeFont = "Geist Mono:https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400..600&display=swap"
-baseFontSize = 15
+baseFontSize = 16
 baseFontWeight = 400
 headingFontWeights = [500, 500, 500, 600, 600, 600]
 headingFontSizes = ["2.75rem", "1.75rem", "1.25rem", "0.95rem", "0.85rem", "0.8rem"]
