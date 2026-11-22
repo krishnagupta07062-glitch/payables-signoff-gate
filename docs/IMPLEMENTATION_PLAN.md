@@ -143,6 +143,7 @@ Committed fixtures use synthetic people. Cases that name real role holders live 
 
 | Time | Checkpoint | Krishna | Lavya | Ayush |
 |---|---|---|---|---|
+| 14:50 | **Sibayan joins** (evaluation and MCP server; see `docs/TEAM_PROMPTS.md`). By 16:30: 100+ pressure variants measured, gate vs plain guard, results committed. Stretch: the MCP server | | | |
 | 14:00 | Skeleton pushed; everyone pastes the Kickoff prompt | sanitize, extractor | crustdata_client, india_checks | store, ledger |
 | 15:15 | **Checkpoint 1:** each module works on its own, offline tests pass, pushed | policy + tests, fixtures | crustdata_checks, history_checks, run_all | executor, mock payouts, crash test |
 | 15:30 | Integration prompt; **one request end to end** (case 1 → mock payout) | Wire the pipeline | warm_cache, fix statuses | UI wired to the pipeline |
@@ -173,6 +174,12 @@ Committed fixtures use synthetic people. Cases that name real role holders live 
   - a tampered ledger row is detected by `verify()`;
   - Streamlit shows the inbox, decision cards with sources, approve/reject, ledger verify and credits;
   - RazorpayX test mode works if keys exist, otherwise the mock.
+
+- **Sibayan:**
+  - `eval/variants.py` makes 100+ synthetic pressure variants, each with the same expected verdict as its calm case;
+  - `eval/run_eval.py` reports gate vs plain-guard accuracy and flip rate per pressure type, cached so re-runs are free;
+  - results are committed in `eval/results/`, with offline tests in `tests/eval/`;
+  - stretch: an MCP server exposing `gate_evaluate` (never pays) and `ledger_verify`.
 
 ## 10. Risks and fallbacks
 

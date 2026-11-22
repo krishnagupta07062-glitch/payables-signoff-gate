@@ -9,3 +9,4 @@ cache/
 runs/
 fixtures/private/
 .pytest_cache/
+eval/cache/

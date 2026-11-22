@@ -41,6 +41,10 @@
 - ✅ UI wired to the pipeline (Run-a-request, simulate crash, Resume). ✅ RazorpayX **test mode verified live**: real test payout, replay gives the same payout, provider rejects a changed body, crash + reconcile adopts the payout.
 - Case 5b added for him (approve → payout). ✅ Stage 3 pushed: Demo tab, decision report export, `docs/DEMO_SCRIPT.md`. Next: video ~17:15.
 
+## Evaluation and MCP server (Sibayan, joined ~14:50)
+
+Kickoff prompt: `docs/TEAM_PROMPTS.md` → Sibayan 1. Owns `eval/**`, `mcp_server/**` and `tests/eval/`. Waiting for his first push.
+
 ## How the fixtures plug in (for Lavya and Ayush)
 
 - `fixtures/vendors.json` holds the trusted vendor records. `pipeline.load_vendors()` turns them into `contracts.Vendor`.
