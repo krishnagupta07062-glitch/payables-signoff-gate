@@ -41,3 +41,34 @@ Newest entries go at the bottom. Each entry lists what changed, how it was teste
 
 ### Open
 - RazorpayX test keys: not set yet (`.env` missing). Mock mode is the default.
+
+---
+
+## 22 Nov 2026, ~14:45 IST: Stage 1, step 6: Streamlit approval UI
+
+### `app/approvals.py` (`streamlit run app/approvals.py`)
+- Sidebar: approver name, payments mode, run-credits panel (from the `calls` mirror), live ledger status, and Developer → "Seed demo decisions".
+- **Inbox** tab: decisions with verdict badges (green ALLOW, red BLOCK, amber ESCALATE) and a filter. Clicking one opens the decision card:
+  - rules fired, with their reasons and check names;
+  - each Check with a status icon, value, note and clickable source links (http(s) only; all untrusted text is HTML-escaped);
+  - the vendor-master bank account next to the claimed account (last 4 only), marked NEW or on file;
+  - the payment summary and idempotency key, and urgency cues marked "logged only";
+  - Approve / Reject for ESCALATED items. Approve calls `store.record_approval` first, then `app/worker.py`. A double click shows "already decided".
+- **Ledger** tab: "Verify chain" button and the event table (hash and prev hash).
+- **Payouts** tab: payouts, outbox, "Refresh status" (polls the provider), "Resume unfinished" (`executor.resume()`), and the mock provider's own view of its payouts.
+- Loads `.env` if it exists (no new dependency).
+
+### `app/worker.py`
+- `pay_approved(request_id, approver)` runs only in the APPROVED state, then calls `issue_receipt` and `execute`. The UI never calls the provider itself.
+
+### `app/dev_seed.py` (`python -m app.dev_seed`)
+- One synthetic vendor and four decisions: a clean invoice (ALLOW, paid), a lookalike-domain bank change (BLOCK B2), a genuine bank change (ESCALATE E1/E2) and an unverifiable requester (ESCALATE E6). These are only for development until Krishna's pipeline is ready.
+
+### Tests
+- `tests/pay/test_ui.py`: headless `streamlit.testing` run. It renders 3 tabs, approves DEMO-5 (→ PAID, a 2nd mock payout) and checks that Verify chain says intact.
+- Full suite: **29 passed** offline (`MOCK=1 python -m pytest -q`).
+
+### Open / next (Stage 2, from 15:30)
+- Wire the "Run a request" panel to `gate.pipeline.run` once Krishna's pipeline lands (it currently raises NotImplementedError).
+- Add the simulate-crash toggle and on-stage Resume. The crash must run in a subprocess, because `os._exit` would kill Streamlit.
+- RazorpayX test keys: still not set.
