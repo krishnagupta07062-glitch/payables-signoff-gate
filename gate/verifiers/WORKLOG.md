@@ -13,13 +13,22 @@ Newest entries at the top.
 | Duplicate, near-duplicate, account on master, account shared, PO match, penny drop (simulated) | `history_checks.py` | ✅ done, tested |
 | Sender domain matches vendor, vendor active, requester role / departed, current role holder | `crustdata_checks.py` | ✅ done, tested with fake Crustdata responses |
 | `run_all()` (parallel, shared 20 s deadline, never raises) | `__init__.py` | ✅ done |
-| `scripts/warm_cache.py` | | ⏳ next (15:30 prompt) |
+| `scripts/warm_cache.py` | `scripts/warm_cache.py` | ✅ done; run once without a Crustdata key, 0-credit second run tested |
 | Live run against real Crustdata / RDAP / IFSC | | ⏳ needs `.env` with Lavya's key |
 | `vendor_news` | | ✂️ cut (first item in the team's cut list) |
 
 Tests: `tests/verifiers/` has 39 tests. Full suite: 96 passed, offline.
 
 ## Log
+
+### ~15:20: `scripts/warm_cache.py`
+- Runs the same checks as `run_all` (`verifiers.plan`), but one at a time with no deadline, so a cold cache fills completely under the 5-per-minute limit.
+- Prints check, status, the spec's status, credits, seconds and source for every case, then a summary: credits, live vs cached Crustdata calls, slowest checks, and every check that differs from the spec.
+- Uses each case's stored claims by default (no model tokens); `--extract` uses the live extractor instead.
+- New test: the second run spends 0 credits and makes no new calls.
+- Fixed in the client: Crustdata 4xx answers are now cached and replayed as the same error. Before, they were re-asked every run, wasting rate-limit slots. 5xx, 429 and timeouts are still retried.
+- First real run (free sources only, no Crustdata key yet): 13 cases, 152 checks, 10 s. IFSC and the GST portal match the spec.
+- **Finding, logged for Krishna:** the synthetic vendor domains (`acmeleather.in`, `kanpurtannery.co.in`) aren't registered (RDAP 404), so domain age is CONTRADICTED. Live, genuine cases would BLOCK (B2). The live demo needs real, registered vendor domains.
 
 ### ~15:00: reviewed the decisions; lookalike domains should escalate
 - Lavya's call: a lookalike sender domain should ESCALATE to a person, not BLOCK.

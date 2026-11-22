@@ -10,7 +10,8 @@ Usage:
 
 Behaviour:
 - Cache: SQLite under cache/, keyed by sha256(path + canonical body + API version). A cached answer costs 0.
-  An "inflight" row is written before each live call, so a crash mid-call is visible.
+  An "inflight" row is written before each live call, so a crash mid-call is visible. A 4xx answer is
+  cached too and replayed as the same error; 5xx, 429 and timeouts are not cached, so the next run retries.
 - Rate limit: 5 calls per rolling minute (shared by every thread in the process).
 - 429: retry with backoff (up to 3 tries), then CrustdataRateLimited.
 - Timeout / network error: CrustdataTimeout. Other HTTP errors: CrustdataError.
@@ -162,8 +163,8 @@ class Crustdata:
         with _DB_LOCK:
             con = self._db()
             try:
-                return con.execute("select response, request_id, at from cache where key=? and state='done'",
-                                   (key,)).fetchone()
+                return con.execute("select response, request_id, at, state from cache where key=? "
+                                   "and state in ('done', 'error')", (key,)).fetchone()
             finally:
                 con.close()
 
@@ -189,7 +190,10 @@ class Crustdata:
         if hit:
             data = json.loads(hit[0])
             if budget is not None:
-                budget.charge("crustdata", path, 0.0, request_id=hit[1], cached=True)
+                budget.charge("crustdata", path, 0.0, request_id=hit[1], cached=True,
+                              note="cached error" if hit[3] == "error" else "")
+            if hit[3] == "error":  # a 4xx is deterministic: replay it instead of re-asking
+                raise CrustdataError(f"{data.get('status')} {path} (cached): {data.get('body', '')[:300]}")
             return CallResult(data, hit[1], 0.0, True, path, key, hit[2])
 
         if mock_mode():
@@ -233,7 +237,10 @@ class Crustdata:
         if status == 429:
             raise CrustdataRateLimited(f"{path}: 429 after {max_retries} retries")
         if status >= 400:
-            raise CrustdataError(f"{status} {path}: {raw[:300].decode('utf-8', 'replace')}")
+            body_txt = raw[:300].decode("utf-8", "replace")
+            if status < 500:  # 4xx (bad filter, no access) repeats identically: cache it. 5xx is retried next run.
+                self._cache_put(key, path, body, "error", {"status": status, "body": body_txt}, credits, request_id)
+            raise CrustdataError(f"{status} {path}: {body_txt}")
         try:
             data = json.loads(raw)
         except ValueError:
