@@ -19,4 +19,11 @@ Append only. Each entry: the file, the owner, the failing test or command, and t
 
 - **14:40, from Lavya (checks), for Krishna:** `fixtures/vendors.json` vendors (V-ACME `acmeleather.in`, V-KTW `kanpurtannery.co.in`) have `crustdata_company_id: null`, and Crustdata has no record for those domains (research 05 §4.3: `acmeleather.in → []`). With live verifiers (`MOCK=0`), `sender_domain_matches_vendor`, `requester_current_role` and `requester_departed` can only return UNVERIFIABLE, so case 1 escalates (E6) instead of ALLOW, and cases 3, 4 and 8 lose their Crustdata evidence. Offline (`MOCK=1`) is unaffected. The live demo needs real vendors with a `crustdata_company_id` in `fixtures/private/`. Every non-network check already matches each case's `mock_checks`.
 
+- **15:55, for Lavya: `requester_departed` / `requester_current_role` picked the wrong person with the same name (live, private case 12).** Command: `python scripts/run_demo.py --live-checks --only-private --case 12 --trace`. The request is signed "Head - Finance Shared Services" at Bata India (company 573). Crustdata has more than one person with that name who worked at Bata, and the check chose the one who was a *Sales and Marketing Intern until 2015-08* (now at another company), not the finance head who left in 2026-10. The verdict was right (BLOCK B3) only by luck; this is the "same name" risk the README promises to guard against. Fix in `gate/verifiers/crustdata_checks.py`:
+  1. With several candidates at the vendor, score each by title similarity to `claims.requester_role` (rapidfuzz `token_set_ratio`), then by most recent end date.
+  2. If the best match is still ambiguous (two candidates within ~10 points, or none above ~60), return **UNVERIFIABLE** with "N people with this name at the vendor; cannot tell which one". Don't return CONTRADICTED.
+  3. Put the chosen record's title, dates and person id in `value` and `sources`, so the reviewer sees *which* person was matched.
+  4. Add an offline test with two same-name candidates (synthetic).
+  Cost of the whole live private run: 0.89 credits, 15 calls (5 cached).
+
 ## pay

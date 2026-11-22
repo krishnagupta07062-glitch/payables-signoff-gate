@@ -155,7 +155,7 @@ def _escalate_rules(x: _Ctx) -> None:
     cl, v = x.claims, x.vendor
     if x.is_change:
         who = cl.requester_name or "an unnamed sender"
-        x.add("E1", f"{RULES['E1']}. {who} asks to change {cl.requested_change.replace('_', ' ')}. "
+        x.add("E1", f"{RULES['E1']}. {who} asks for a {cl.requested_change.replace('_', ' ')}. "
                     "Confirm by calling back on a number recorded before this request.")
         if x.status("penny_drop_name_match") in (U, None) and cl.pay_to_account:
             x.add("E3", f"{RULES['E3']}. {x.note('penny_drop_name_match') or 'Penny-drop not run.'}",
