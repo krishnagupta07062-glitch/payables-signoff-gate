@@ -85,6 +85,7 @@ Rules are checked in order; the first BLOCK wins, then any ESCALATE, otherwise A
 | E7 | Pay-to country differs from the vendor's country | ESCALATE |
 | E8 | Amount above the vendor's per-payment or per-day limit | ESCALATE |
 | E9 | Any other CONTRADICTED check not used by a BLOCK rule (e.g. `vendor_news`, `sender_domain_matches_vendor`) | ESCALATE |
+| E10 | `sender_domain_lookalike` CONTRADICTED on a weak signal only (same name under another ending, or contains the vendor's name). Strong signals (punycode, look-alike characters, 1–2 edits) stay B2 | ESCALATE |
 | A1 | None of the above | ALLOW |
 
 ## 5. Checks (Lavya implements in `gate/verifiers/`)
