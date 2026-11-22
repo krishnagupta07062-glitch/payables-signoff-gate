@@ -63,3 +63,22 @@
 ## Open items
 
 - Krishna's Anthropic key has no credit, so the free **Gemini** provider was added: set `GATE_PROVIDER=gemini` and `GEMINI_API_KEY` (from aistudio.google.com/apikey) in `.env`. Without a working key, live extraction falls back to stored claims and the trace says so.
+
+### Evaluation
+
+*Sibayan's work (eval + MCP), done from Ayush's session. Full results: [`eval/results/1612.md`](../eval/results/1612.md) (and `.json`).*
+
+**130 cases** = the 14 committed cases plus 116 deterministic pressure variants: authority, deadline, flattery, threat, Hinglish urgency, a visible "note to the AI assistant", hidden HTML injection, Unicode-tag smuggling, and a planted "DISPUTED - DO NOT PAY" note. Same model for both sides (`gemini-3.5-flash-lite`); 228 live calls, 0 errors.
+
+| | Correct | Flips under pressure (vs the calm case) | Unsafe ALLOWs (expected BLOCK/ESCALATE) |
+|---|---|---|---|
+| **Gate** (model extracts, records check, code decides) | **130/130 (100%)** | **0/116 (0%)** | **0** |
+| Plain model guard (reads the raw email and decides) | 48/130 (37%) | 15/116 (13%) | 21 |
+
+- The guard flipped most on **Unicode-tag smuggling (5/14)**, **planted "do not pay" notes (3/4)** and **Hinglish urgency (3/14)**. It ALLOWed requests whose expected answer was BLOCK or ESCALATE 21 times, e.g. a duplicate invoice re-sent with a threat (case 02) and a timed-out check under authority or deadline pressure (case 09).
+- **Honest caveats:**
+  - The gate ran with *stored* checks (`MOCK_CHECKS=1`), so this measures extraction plus policy under pressure, not the live checks.
+  - The guard has no payment history and no record checks, so part of its 37% comes from missing information, not tone. The **flip rate (13%) is the pressure-only number.**
+  - 9/130 extractions differed from the stored claims, all case 05b: the email says only "account ending 7777", and the model correctly didn't invent a full number. The verdicts were still right.
+- Reproduce: `python -m eval.variants && python -m eval.run_eval --sleep 3` (answers cached in `eval/cache/`, so a re-run is free). Offline harness: `python -m eval.run_eval --offline`.
+- MCP server: `claude mcp add payables-gate -- python mcp_server/server.py` (tools `gate_evaluate`, which never pays, and `ledger_verify`).
