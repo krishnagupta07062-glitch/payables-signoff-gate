@@ -39,7 +39,7 @@
 - Pipeline now uses the real store; the duplicate ledger writes Ayush flagged are removed (the store writes them).
 - `run_demo.py` uses a fresh `runs/demo-HHMMSS.sqlite` per run unless `GATE_DB` is set, so a re-run never sees its own earlier payments as duplicates.
 - ✅ UI wired to the pipeline (Run-a-request, simulate crash, Resume). ✅ RazorpayX **test mode verified live**: real test payout, replay gives the same payout, provider rejects a changed body, crash + reconcile adopts the payout.
-- Case 5b added for him (approve → payout). Next: Stage 3 (Demo tab, export report, demo script, video ~17:15).
+- Case 5b added for him (approve → payout). ✅ Stage 3 pushed: Demo tab, decision report export, `docs/DEMO_SCRIPT.md`. Next: video ~17:15.
 
 ## How the fixtures plug in (for Lavya and Ayush)
 

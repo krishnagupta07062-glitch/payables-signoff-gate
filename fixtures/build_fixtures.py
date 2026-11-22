@@ -9,6 +9,10 @@ Each request file:
   mock_checks  (what correct verifiers return for this synthetic world; used with MOCK=1 or while the
                 verifiers are not ready). Live runs (MOCK=0) ignore both.
 Cases with real role holders for the live demo go in fixtures/private/ (gitignored), same format.
+
+Vendor bank accounts carry the SYNTHETIC account number; the loaders (store.vendor_from_dict and
+pipeline.vendor_from_dict) turn it into last-4 + keyed hash with whatever ACCOUNT_HASH_KEY is set,
+so the demo works with or without the team key. Real account numbers never go in fixtures.
 """
 from __future__ import annotations
 
@@ -41,7 +45,7 @@ VENDORS = [
         "vendor_id": "V-ACME", "legal_name": "Acme Leather Exports Pvt Ltd", "gstin": ACME_GSTIN,
         "pan": "AAACA1234A", "state_code": "09", "country": "IN", "domains": ["acmeleather.in"],
         "crustdata_company_id": None,
-        "bank_accounts": [{"ifsc": "HDFC0001234", "account_last4": ACME_ACCT[-4:], "account_hash": account_hash(ACME_ACCT),
+        "bank_accounts": [{"ifsc": "HDFC0001234", "account_number": ACME_ACCT,
                            "holder_name": "ACME LEATHER EXPORTS PVT LTD", "verified_at": "2026-01-10", "added_at": "2026-01-10"}],
         "contacts": [{"name": "Asha Rao", "role": "Accounts Manager", "email": "asha.rao@acmeleather.in",
                       "phone_on_file": "+91-90000-11111", "recorded_at": "2026-01-10"},
@@ -52,7 +56,7 @@ VENDORS = [
     {
         "vendor_id": "V-KTW", "legal_name": "Kanpur Tannery Works", "gstin": KTW_GSTIN, "pan": "ABCPK5678B",
         "state_code": "09", "country": "IN", "domains": ["kanpurtannery.co.in"], "crustdata_company_id": None,
-        "bank_accounts": [{"ifsc": "SBIN0001111", "account_last4": KTW_ACCT[-4:], "account_hash": account_hash(KTW_ACCT),
+        "bank_accounts": [{"ifsc": "SBIN0001111", "account_number": KTW_ACCT,
                            "holder_name": "KANPUR TANNERY WORKS", "verified_at": "2026-03-02", "added_at": "2026-03-02"}],
         "contacts": [{"name": "Ramesh Kumar", "role": "Proprietor", "email": "ramesh@kanpurtannery.co.in",
                       "phone_on_file": "+91-90000-33333", "recorded_at": "2026-03-02"}],
@@ -217,7 +221,7 @@ case(5, "pushy", "Genuine bank change, pushy tone", "ESCALATE", ["E1"],
 import copy  # noqa: E402
 ACME_AFTER_CHANGE = copy.deepcopy(VENDORS[0])
 ACME_AFTER_CHANGE["bank_accounts"].append(
-    {"ifsc": "ICIC0000456", "account_last4": ACME_NEW_ACCT[-4:], "account_hash": account_hash(ACME_NEW_ACCT),
+    {"ifsc": "ICIC0000456", "account_number": ACME_NEW_ACCT,
      "holder_name": "ACME LEATHER EXPORTS PVT LTD", "verified_at": "2026-11-22", "added_at": "2026-11-22"})
 t5b = (INVOICE_TEXT.format(gstin=ACME_GSTIN).replace("0042", "0050")
        .replace("Please remit to our account on file with you.",

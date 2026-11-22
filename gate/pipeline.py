@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from dataclasses import dataclass, field, fields
 from datetime import date
 from pathlib import Path
@@ -32,9 +33,19 @@ def _only(cls, d: dict) -> dict:
     return {k: v for k, v in d.items() if k in names}
 
 
+def _account(a: dict) -> BankAccount:
+    """Fixtures carry a synthetic account_number; hash it with the current ACCOUNT_HASH_KEY."""
+    if a.get("account_number"):
+        from gate.keys import account_hash
+        num = re.sub(r"\D", "", str(a["account_number"]))
+        a = {k: v for k, v in a.items() if k != "account_number"}
+        a.update(account_last4=num[-4:], account_hash=account_hash(num))
+    return BankAccount(**_only(BankAccount, a))
+
+
 def vendor_from_dict(d: dict) -> Vendor:
     v = Vendor(**_only(Vendor, d))
-    v.bank_accounts = [BankAccount(**_only(BankAccount, a)) for a in d.get("bank_accounts", [])]
+    v.bank_accounts = [_account(a) for a in d.get("bank_accounts", [])]
     v.contacts = [Contact(**_only(Contact, c)) for c in d.get("contacts", [])]
     return v
 

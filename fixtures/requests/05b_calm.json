@@ -100,16 +100,14 @@
     "bank_accounts": [
       {
         "ifsc": "HDFC0001234",
-        "account_last4": "9012",
-        "account_hash": "fd94fbb31e3c919eeb2ffc6ae7d7a784c5e3a840b2ce62ccb92cd878ba3cee83",
+        "account_number": "123456789012",
         "holder_name": "ACME LEATHER EXPORTS PVT LTD",
         "verified_at": "2026-01-10",
         "added_at": "2026-01-10"
       },
       {
         "ifsc": "ICIC0000456",
-        "account_last4": "7777",
-        "account_hash": "1627354b335083a74fe68809531ef983278b3aa2be0ac9b429bda526e3a779e4",
+        "account_number": "555566667777",
         "holder_name": "ACME LEATHER EXPORTS PVT LTD",
         "verified_at": "2026-11-22",
         "added_at": "2026-11-22"

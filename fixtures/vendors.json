@@ -13,8 +13,7 @@
     "bank_accounts": [
       {
         "ifsc": "HDFC0001234",
-        "account_last4": "9012",
-        "account_hash": "fd94fbb31e3c919eeb2ffc6ae7d7a784c5e3a840b2ce62ccb92cd878ba3cee83",
+        "account_number": "123456789012",
         "holder_name": "ACME LEATHER EXPORTS PVT LTD",
         "verified_at": "2026-01-10",
         "added_at": "2026-01-10"
@@ -54,8 +53,7 @@
     "bank_accounts": [
       {
         "ifsc": "SBIN0001111",
-        "account_last4": "4444",
-        "account_hash": "feb64124ce416e9c1386bf3148b1e7de5064826a01b482b7ff98f5603f1f37fa",
+        "account_number": "222233334444",
         "holder_name": "KANPUR TANNERY WORKS",
         "verified_at": "2026-03-02",
         "added_at": "2026-03-02"
