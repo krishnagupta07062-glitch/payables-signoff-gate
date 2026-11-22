@@ -448,19 +448,81 @@ def pending_escalations() -> list[dict]:
              "sender": r["sender"]} for r in rows]
 
 
+class ApprovalRefused(ValueError):
+    """The approval breaks an approver rule; nothing was recorded."""
+
+
+class SecondApproverNeeded(Exception):
+    """The first of two required approvals was recorded; a different approver must approve too."""
+
+
+DEFAULT_APPROVERS = "finance.controller,ap.lead,cfo"
+DEFAULT_TWO_PERSON_MIN_INR = 500000  # ₹5 lakh
+
+
+def approvers() -> set[str]:
+    """Who may approve or reject: APPROVERS (comma-separated), else the demo default."""
+    raw = os.environ.get("APPROVERS") or DEFAULT_APPROVERS
+    return {a.strip().lower() for a in raw.split(",") if a.strip()}
+
+
+def two_person_min_paise() -> int:
+    try:
+        return int(float(os.environ.get("TWO_PERSON_MIN_INR") or DEFAULT_TWO_PERSON_MIN_INR) * 100)
+    except ValueError:
+        return DEFAULT_TWO_PERSON_MIN_INR * 100
+
+
+def _approval_problem(approver: str, approve: bool, note: str, req: dict) -> Optional[str]:
+    who = (approver or "").strip().lower()
+    if who not in approvers():
+        return f"{approver or '(blank)'} is not an approver (allowed: {', '.join(sorted(approvers()))})"
+    sender = (req.get("sender") or "").strip().lower()
+    if sender and who in (sender, sender.split("@")[0]):
+        return "the requester cannot approve their own request (maker-checker)"
+    if approve and req.get("kind") == "bank_change" and not (note or "").strip():
+        return "a bank change needs a note recording the call-back on the number on file"
+    return None
+
+
 def record_approval(request_id: str, approver: str, approve: bool, note: str = "") -> bool:
-    """Atomic: UPDATE ... WHERE state='ESCALATED'. Returns False if already decided (double click)."""
+    """Atomic: UPDATE ... WHERE state='ESCALATED'. Returns False if already decided (double click).
+
+    Approver rules (enforced here, not only in the UI): the approver must be on the APPROVERS list, cannot be
+    the requester, and must leave a call-back note to approve a bank change (ApprovalRefused). A payment of
+    TWO_PERSON_MIN_INR or more needs two different approvers: the first approval is recorded and
+    SecondApproverNeeded is raised; the second one moves the decision to APPROVED.
+    """
     new_state = APPROVED if approve else REJECTED
+    needs_second = False
     with tx() as c:
-        cur = c.execute("UPDATE decisions SET state=?, updated_at=? WHERE request_id=? AND state='ESCALATED'",
-                        (new_state, now_iso(), request_id))
-        if cur.rowcount != 1:
+        row = c.execute("SELECT state, decision FROM decisions WHERE request_id=?", (request_id,)).fetchone()
+        if not row or row["state"] != ESCALATED:
             return False
+        req = c.execute("SELECT kind, sender FROM requests WHERE request_id=?", (request_id,)).fetchone()
+        problem = _approval_problem(approver, approve, note, dict(req) if req else {})
+        if problem:
+            raise ApprovalRefused(problem)
+        action = (json.loads(row["decision"] or "{}") or {}).get("action") or {}
+        if approve and (action.get("amount_paise") or 0) >= two_person_min_paise():
+            prior = {r["approver"].strip().lower() for r in c.execute(
+                "SELECT approver FROM approvals WHERE request_id=? AND approve=1", (request_id,))}
+            if approver.strip().lower() in prior:
+                raise ApprovalRefused("a payment this large needs a second, different approver")
+            if not prior:
+                needs_second = True
+        if not needs_second:
+            cur = c.execute("UPDATE decisions SET state=?, updated_at=? WHERE request_id=? AND state='ESCALATED'",
+                            (new_state, now_iso(), request_id))
+            if cur.rowcount != 1:
+                return False
         at = now_iso()
         c.execute("INSERT INTO approvals(request_id, approver, approve, note, at) VALUES(?,?,?,?,?)",
                   (request_id, approver, int(bool(approve)), note, at))
         _ledger_append(c, "approval", {"request_id": request_id, "approver": approver, "approve": bool(approve),
-                                       "note": note, "at": at})
+                                       "note": note, "at": at, "first_of_two": needs_second})
+    if needs_second:
+        raise SecondApproverNeeded(f"first approval recorded by {approver}; a second, different approver must approve")
     return True
 
 

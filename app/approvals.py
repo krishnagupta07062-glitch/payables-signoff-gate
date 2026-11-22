@@ -68,7 +68,11 @@ def link(ref: str) -> str:
 
 with st.sidebar:
     st.header("Sign-Off Gate")
-    approver = st.text_input("Signed in as (approver)", value=st.session_state.get("approver", "finance.controller"))
+    approver = st.text_input("Signed in as (approver)", value=st.session_state.get("approver", "finance.controller"),
+                             help="Only listed approvers can approve or reject: " + ", ".join(sorted(store.approvers()))
+                                  + ". The requester can't approve their own request, a bank change needs a call-back "
+                                  "note, and payments of ₹" + f"{store.two_person_min_paise() // 100:,}"
+                                  + " or more need two different approvers.")
     st.session_state["approver"] = approver
     st.caption(f"Payments: **{razorpayx.mode()}** · DB: `{Path(store.db_path()).name}`")
     st.subheader("Run credits")
@@ -207,19 +211,33 @@ def decision_card(request_id: str, where: str = "inbox") -> None:
         a_col, r_col, _ = st.columns([1, 1, 4])
         if a_col.button("Approve", key=f"{where}-approve-{request_id}", type="primary", icon=":material/check:",
                         width="stretch"):
-            if store.record_approval(request_id, approver, True, note):
-                res = worker.pay_approved(request_id, approver)
-                st.session_state["flash"] = f"Approved. Payment: {res}"
-                nudge(f"Approved {request_id}", ":material/check_circle:", later=True)
+            try:
+                ok = store.record_approval(request_id, approver, True, note)
+            except store.ApprovalRefused as e:
+                st.session_state["flash_err"] = f"Not approved: {e}."
+                nudge(f"Not approved: {e}", ":material/block:", later=True)
+            except store.SecondApproverNeeded as e:
+                st.session_state["flash"] = f"First approval recorded. {str(e).split('; ', 1)[-1].capitalize()}."
+                nudge("First approval recorded: a second approver is needed", ":material/group:", later=True)
             else:
-                st.session_state["flash"] = "Already decided (double click ignored)."
-                nudge("Already decided (double click ignored).", ":material/front_hand:", later=True)
+                if ok:
+                    res = worker.pay_approved(request_id, approver)
+                    st.session_state["flash"] = f"Approved. Payment: {res}"
+                    nudge(f"Approved {request_id}", ":material/check_circle:", later=True)
+                else:
+                    st.session_state["flash"] = "Already decided (double click ignored)."
+                    nudge("Already decided (double click ignored).", ":material/front_hand:", later=True)
             st.rerun()
         if r_col.button("Reject", key=f"{where}-reject-{request_id}", icon=":material/close:", width="stretch"):
-            ok = store.record_approval(request_id, approver, False, note)
-            st.session_state["flash"] = "Rejected." if ok else "Already decided (double click ignored)."
-            nudge(f"Rejected {request_id}: nothing will be paid" if ok else "Already decided (double click ignored).",
-                  ":material/block:" if ok else ":material/front_hand:", later=True)
+            try:
+                ok = store.record_approval(request_id, approver, False, note)
+            except store.ApprovalRefused as e:
+                st.session_state["flash_err"] = f"Not rejected: {e}."
+                nudge(f"Not rejected: {e}", ":material/block:", later=True)
+            else:
+                st.session_state["flash"] = "Rejected." if ok else "Already decided (double click ignored)."
+                nudge(f"Rejected {request_id}: nothing will be paid" if ok else "Already decided (double click ignored).",
+                      ":material/block:" if ok else ":material/front_hand:", later=True)
             st.rerun()
     elif row["state"] == store.APPROVED and action:
         if st.button("Retry payment", key=f"{where}-retry-{request_id}", icon=":material/refresh:"):
@@ -231,6 +249,8 @@ def decision_card(request_id: str, where: str = "inbox") -> None:
 with tab_inbox:
     if st.session_state.get("flash"):
         st.success(st.session_state.pop("flash"))
+    if st.session_state.get("flash_err"):
+        st.error(st.session_state.pop("flash_err"), icon=":material/block:")
     decisions = store.list_decisions()
     if not decisions:
         st.info("No decisions yet. Run the pipeline, or use Developer → Seed demo decisions in the sidebar.")
@@ -328,7 +348,11 @@ with tab_demo:
                 st.rerun()
         if res.get("approval"):
             ap = res["approval"]
-            if ap.get("payout_id"):
+            if ap.get("status") == "refused_by_rule":
+                st.error(ap["error"], icon=":material/block:")
+            elif ap.get("status") == "needs_second_approver":
+                st.info(ap["error"], icon=":material/group:")
+            elif ap.get("payout_id"):
                 st.success(f"Approved by {approver} → receipt → executor → payout **{ap['payout_id']}** ({ap.get('payout_status') or ap['status']})")
             elif ap.get("status") == "no_payment":
                 st.info(f"Approved by {approver}. The new account is on the vendor master; nothing to pay on a bank change.")

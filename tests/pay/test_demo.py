@@ -24,7 +24,8 @@ def test_demo_walkthrough(mock_env):
 
     r = demo.run_step("bank")
     assert r["verdict"] == "ESCALATE" and "E1" in r["rule_ids"]
-    assert demo.approve(r["request_id"], "controller")["status"] == "no_payment"
+    assert demo.approve(r["request_id"], "controller")["status"] == "refused_by_rule"   # no call-back note
+    assert demo.approve(r["request_id"], "controller", "called back")["status"] == "no_payment"
 
     r = demo.run_step("first")
     assert r["verdict"] == "ESCALATE" and "E2" in r["rule_ids"]

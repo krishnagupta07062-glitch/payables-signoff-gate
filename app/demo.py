@@ -77,8 +77,13 @@ def run_step(step_id: str, crash: bool = False, max_credits: float = 10.0) -> di
 
 def approve(request_id: str, approver: str, note: str = "") -> dict:
     """A person approves; if the request carries a payment, the worker pays it (receipt -> executor)."""
-    if not store.record_approval(request_id, approver, True, note):
-        return {"status": "already_decided"}
+    try:
+        if not store.record_approval(request_id, approver, True, note):
+            return {"status": "already_decided"}
+    except store.ApprovalRefused as e:
+        return {"status": "refused_by_rule", "error": f"Not approved: {e}."}
+    except store.SecondApproverNeeded as e:
+        return {"status": "needs_second_approver", "error": f"First approval recorded: {e}."}
     return worker.pay_approved(request_id, approver)
 
 

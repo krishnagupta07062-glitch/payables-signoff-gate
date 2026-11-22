@@ -17,6 +17,8 @@ def db(tmp_path, monkeypatch):
     monkeypatch.setenv("PAYMENTS_MODE", "mock")
     monkeypatch.setenv("ACCOUNT_HASH_KEY", "test-key")
     monkeypatch.delenv("GATE_CRASH_AT", raising=False)
+    monkeypatch.setenv("APPROVERS", "alice,bob,carol,controller,finance.controller,ap.lead")
+    monkeypatch.delenv("TWO_PERSON_MIN_INR", raising=False)
     store.init_db(path)
     return path
 

@@ -20,6 +20,11 @@ def test_ui_renders_and_approves(db):
     # select the escalated bank change and approve it
     next(b for b in at.button if b.label == "ESCALATE · DEMO-5-bankchange").click().run()
     assert not at.exception
+    next(b for b in at.button if b.label.endswith("Approve")).click().run()       # no call-back note: refused
+    assert not at.exception
+    assert store.get_decision_row("DEMO-5-bankchange")["state"] == store.ESCALATED
+    assert any("call-back" in e.value for e in at.error)
+    next(t for t in at.text_input if t.key == "inbox-note-DEMO-5-bankchange").set_value("Called back on file").run()
     next(b for b in at.button if b.label.endswith("Approve")).click().run()
     assert not at.exception
     assert store.get_decision_row("DEMO-5-bankchange")["state"] == store.PAID
@@ -92,6 +97,7 @@ def test_nudges_on_waiting_approve_and_double_click(db):
     assert not at.exception
     assert any("waiting for a person" in t.value for t in at.toast)        # nudge: people are waiting
     next(b for b in at.button if b.label == "ESCALATE · DEMO-5-bankchange").click().run()
+    next(t for t in at.text_input if t.key == "inbox-note-DEMO-5-bankchange").set_value("Called back on file").run()
     next(b for b in at.button if b.label.endswith("Approve")).click().run()
     assert not at.exception
     assert any("Approved DEMO-5-bankchange" in t.value for t in at.toast)
